@@ -170,9 +170,17 @@ td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 .staff .nt{fill:#8A5A22;stroke:#8A5A22;stroke-width:1.6;transform-box:fill-box;transform-origin:center;animation:blink 2.6s ease-in-out infinite}
 .staff .nt line{stroke-linecap:round}
 @keyframes blink{0%,100%{opacity:.15;transform:translateY(2px) scale(.8)}45%,55%{opacity:1;transform:translateY(-2px) scale(1.12)}}
-@media (prefers-reduced-motion:reduce){.staff .nt{animation:none;opacity:1}}
+
 .brand img.lg-ic{border:0;border-radius:0;object-fit:contain;width:36px;height:36px;flex:none}
 .top-logo{width:36px;height:36px;object-fit:contain;flex:none;margin-left:2px}
+.bgl.sch{background-size:contain;opacity:.10}
+.top-logo.sch{width:40px;height:40px;border-radius:10px;object-fit:contain}
+.by{display:flex;align-items:center;justify-content:center;gap:6px;padding:18px 0 8px;opacity:.55;font-size:.7rem}
+.by img{height:16px;width:auto}
+.crop{display:grid;gap:12px;justify-items:center}
+.crop canvas{width:min(300px,76vw);height:min(300px,76vw);border-radius:14px;touch-action:none;cursor:grab;border:1.5px solid var(--line);background:#fff}
+.crop input[type=range]{width:min(300px,76vw)}
+.crop small{text-align:center}
 .bgl{position:fixed;inset:0;z-index:0;background-position:center;background-repeat:no-repeat;background-size:min(72vmin,560px);opacity:.06;pointer-events:none}
 .view{position:relative;z-index:1}
 .toast{overflow-wrap:anywhere;line-height:1.35}
@@ -189,7 +197,7 @@ td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 #curtain.open .pel{opacity:0;transform:translateY(-40px)}
 #curtain .ct{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,86vw);background:#FFFCF6;border-radius:28px;padding:22px 18px 16px;display:grid;gap:10px;box-shadow:0 30px 70px rgba(0,0,0,.5);z-index:3;transition:opacity .5s,transform .5s}
 #curtain.open .ct{opacity:0;transform:translate(-50%,-50%) scale(.92)}
-@media (prefers-reduced-motion:reduce){#curtain{display:none}}
+
 /* instalar e avisos */
 .inst{display:grid;gap:10px}
 .inst details{border:1.5px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--surface-2)}
@@ -219,7 +227,7 @@ td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
   .menu-btn{display:grid}
 }
 @media (max-width:520px){.cal button{min-height:52px;padding:4px}.cal button span{font-size:.6rem;padding:0 4px}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){*:not(.nt):not(.cp):not(.pel):not(.ct){animation:none!important}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -258,7 +266,7 @@ const IC={
  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',back:'<path d="M15 5l-7 7 7 7"/>',bell:'<path d="M6 17V11a6 6 0 1 1 12 0v6l1.5 2h-15zM10 21h4"/>',
  home:'<path d="M4 11l8-7 8 7v9H4zM10 20v-6h4v6"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-4 3-6 6.5-6s6.5 2 6.5 6M16 5a3.5 3.5 0 0 1 0 7M18 14c2.5.6 3.5 2.5 3.5 6"/>',
- book:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/>',flag:'<path d="M5 21V4M5 5h13l-2 4 2 4H5"/>',
+ book:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/>',hist:'<path d="M12 7v5l3 2M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4"/>',flag:'<path d="M5 21V4M5 5h13l-2 4 2 4H5"/>',
  sheet:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 9v12"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.5-7 8-7s8 2.5 8 7"/>',
  out:'<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>',plus:'<path d="M12 5v14M5 12h14"/>',dl:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/>'
@@ -398,13 +406,36 @@ function openModal(title,body,acts,lock){
   const f=$('#modal input:not([type=checkbox]):not([type=radio]),#modal select');if(f&&!/date|time|month/.test(f.type||''))setTimeout(()=>{try{f.focus({preventScroll:true})}catch(e){}},50)}
 function closeModal(){$('#modal').innerHTML=''}
 const val=id=>{const e=$('#'+id);return e?e.value:''};
+function cropImg(file,kind,cb){
+  const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+    const logo=kind==='logo',OUT=logo?640:256,V=300;
+    const st={z:1,x:0,y:0};const base=logo?Math.min(V/im.width,V/im.height):Math.max(V/im.width,V/im.height);
+    openModal(logo?'Ajustar a logo':'Ajustar a foto',`<div class="crop"><canvas id="cpC" width="${V}" height="${V}"></canvas><label class="fld" style="width:100%"><span>Zoom</span><input type="range" id="cpZ" min="0.3" max="4" step="0.01" value="1"></label><small>Arraste a imagem para posicionar. ${logo?'Use o zoom para a logo ficar inteira e sem corte. Ela aparece no fundo da tela, em tom suave.':'A foto aparece em círculo.'}</small></div>`,'<button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn" id="cpOk">Usar</button>');
+    const c=document.getElementById('cpC'),g=c.getContext('2d');
+    const draw=(ctx,size,showGuide)=>{const k=size/V;ctx.clearRect(0,0,size,size);
+      if(showGuide){ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);ctx.fillStyle='#e8e4dc';for(let a=0;a<size;a+=20)for(let b=0;b<size;b+=20)if(((a+b)/20)%2==0)ctx.fillRect(a,b,20,20)}
+      const sc=base*st.z*k,w=im.width*sc,h=im.height*sc;ctx.drawImage(im,size/2-w/2+st.x*k,size/2-h/2+st.y*k,w,h);
+      if(showGuide&&!logo){ctx.save();ctx.fillStyle='rgba(0,0,0,.45)';ctx.beginPath();ctx.rect(0,0,size,size);ctx.arc(size/2,size/2,size/2-4,0,7,true);ctx.fill('evenodd');ctx.restore()}};
+    const paint=()=>draw(g,V,true);paint();
+    let drag=null;c.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY,sx:st.x,sy:st.y};c.setPointerCapture(e.pointerId);c.style.cursor='grabbing'};
+    c.onpointermove=e=>{if(!drag)return;const f=V/c.getBoundingClientRect().width;st.x=drag.sx+(e.clientX-drag.x)*f;st.y=drag.sy+(e.clientY-drag.y)*f;paint()};
+    c.onpointerup=c.onpointercancel=()=>{drag=null;c.style.cursor='grab'};
+    document.getElementById('cpZ').oninput=e=>{st.z=+e.target.value;paint()};
+    document.getElementById('cpOk').onclick=()=>{
+      let size=OUT,out='';
+      for(let n=0;n<4;n++){const o=document.createElement('canvas');o.width=o.height=size;draw(o.getContext('2d'),size,false);
+        out=logo?o.toDataURL('image/png'):o.toDataURL('image/jpeg',.85);
+        if(logo&&out.length>380000)out=o.toDataURL('image/webp',.85);
+        if(out.length<380000)break;size=Math.round(size*.75)}
+      closeModal();cb(out)};
+  };im.onerror=()=>toast('Não consegui ler essa imagem.');im.src=r.result};r.readAsDataURL(file)}
 function resizeImg(file,max,cb,png){const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL(png?'image/png':'image/jpeg',.82))};im.onerror=()=>toast('Não consegui ler essa imagem.');im.src=r.result};r.readAsDataURL(file)}
 function applyPalette(){const p=PALS[(me&&me.palette)||'compasso']||PALS.compasso;const r=document.documentElement;Object.keys(p.v).forEach(k=>r.style.setProperty(k,p.v[k]))}
 
 /* ---------- navegação ---------- */
-const NAV_SEC=[['painel','Painel de controle','home'],['agenda','Agenda','cal'],['profs','Professores','users'],['alunos','Alunos e grupos','book'],['datas','Datas e avisos','flag'],['pagto','Pagamento e planilhas','sheet'],['perfil','Perfil','user']];
+const NAV_SEC=[['registro','Registro de ações','hist'],['painel','Painel de controle','home'],['agenda','Agenda','cal'],['profs','Professores','users'],['alunos','Alunos e grupos','book'],['datas','Datas e avisos','flag'],['pagto','Pagamento e planilhas','sheet'],['perfil','Perfil','user']];
 const NAV_PROF=[['inicio','Início','home'],['aulas','Minhas aulas','cal'],['avisos','Avisos','bell'],['perfil','Perfil','user']];
-const navList=()=>me.role==='sec'?NAV_SEC:NAV_PROF;
+const navList=()=>me.role==='sec'?(CLOUD?NAV_SEC:NAV_SEC.filter(n=>n[0]!=='registro')):NAV_PROF;
 const cur=()=>ui.stack[ui.stack.length-1];
 function go(v,reset){if(reset)ui.stack=[{v}];else ui.stack.push({v});ui.drawer=false;render()}
 
@@ -424,15 +455,21 @@ function render(){
     <div class="who">${avatar(me)}<div><b>${esc(me.name)}</b><small>${me.dono?'Dona':me.role==='sec'?'Secretaria':'Professor'}</small></div></div>
     ${me.dono?`<button class="nav" data-act="toMaster">${ico('home')}<span>Painel mestre</span></button>`:''}<button class="nav" data-act="logout">${ico('out')}<span>Sair</span></button>
    </aside><div class="scrim" data-act="drawer"></div>
-   <div class="main"><div class="bgl" style="background-image:url('${db.school.logo||LG_MARK}')"></div>
+   <div class="main"><div class="bgl${db.school.logo?' sch':''}" style="background-image:url('${db.school.logo||LG_MARK}')"></div>
     <header class="top"><button class="ib menu-btn" data-act="drawer" aria-label="Abrir menu">${ico('menu')}</button><button class="ib back-btn" data-act="back" aria-label="Voltar">${ico('back')}</button>
-     <h1>${item[1]}</h1><span class="dt">${fmtDL(today())}</span><button class="ib" data-act="bell" aria-label="Avisos">${ico('bell')}${un?`<span class="n">${un}</span>`:''}</button><img class="top-logo" src="${LG_ICON}" alt="Compasso"></header>
+     <h1>${item[1]}</h1><span class="dt">${fmtDL(today())}</span><button class="ib" data-act="bell" aria-label="Avisos">${ico('bell')}${un?`<span class="n">${un}</span>`:''}</button>${db.school.logo?`<img class="top-logo sch" src="${db.school.logo}" alt="">`:`<img class="top-logo" src="${LG_ICON}" alt="Compasso">`}</header>
     ${db.offset?`<div class="sim">Modo de teste: hoje é ${fmtDL(today())}, ${pad(now().getHours())}:${pad(now().getMinutes())}. <button class="btn sm ghost" data-act="simReset">Voltar ao horário real</button></div>`:''}
-    <main class="view" id="view">${cobBanner()}${viewHtml(v)}</main>
+    <main class="view" id="view">${cobBanner()}${viewHtml(v)}${db.school.logo?`<div class="by"><img src="${LG_FULL}" alt="Compasso"></div>`:''}</main>
    </div></div>`;
   if(document.scrollingElement)document.scrollingElement.scrollTop=keep;
 }
-function viewHtml(v){const f={painel:vPainel,agenda:vAgenda,profs:vProfs,alunos:vAlunos,datas:vDatas,pagto:vPagto,perfil:vPerfil,inicio:vInicio,aulas:vAgenda,avisos:vAvisos}[v];return f?f():''}
+function vRegistro(){
+  const L=db.log||[],pessoas=[...new Map(L.map(x=>[x.porId,x.porNome])).entries()];
+  const f=ui.regF||'';const R=f?L.filter(x=>x.porId===f):L;
+  return`<div class="row sp"><h2>Registro de ações</h2><label class="fld" style="min-width:200px"><span>Pessoa</span><select data-chg="regF"><option value="">Todas</option>${pessoas.map(([id,n])=>`<option value="${esc(id)}" ${id===f?'selected':''}>${esc(n)}</option>`).join('')}</select></label></div>
+  <small>Cada marcação, cadastro ou alteração fica gravada com o nome de quem fez e não pode ser apagada.</small>
+  ${R.length?`<div class="stack">${R.map(x=>`<div class="card"><div class="row sp"><b>${esc(x.porNome||'')} <span class="chip neutral">${ROLEN[x.porRole]||''}</span></b><small>${fmtTs(x.em)}</small></div><div><span class="chip ${x.acao==='apagou'?'bad':x.acao==='criou'?'ok':'info'}">${x.acao==='criou'?'Cadastrou':x.acao==='apagou'?'Apagou':'Alterou'} ${COLN[x.col]||''}</span> <small>${esc(x.txt||'')}</small></div></div>`).join('')}</div>`:'<div class="empty">Ainda não há ações registradas.</div>'}`}
+function viewHtml(v){const f={painel:vPainel,agenda:vAgenda,profs:vProfs,alunos:vAlunos,datas:vDatas,pagto:vPagto,perfil:vPerfil,inicio:vInicio,aulas:vAgenda,avisos:vAvisos,registro:vRegistro}[v];return f?f():''}
 
 /* ---------- login ---------- */
 function loginView(){return`<div class="login"><form class="login-card" id="loginForm" onsubmit="return false">
@@ -520,7 +557,7 @@ function vAvisos(){
 /* ---------- professores ---------- */
 function vProfs(){
   return`<div class="row sp"><h2>Professores</h2><button class="btn" data-act="newProf">${ico('plus')}Novo professor</button></div>
-  ${profs().length?`<div class="cards">${profs().map(p=>`<div class="card"><div class="row">${avatar(p,true)}<div style="flex:1;min-width:0"><b style="font-size:1.05rem;overflow-wrap:anywhere">${esc(p.name)}</b><br><small>${p.tipo==='grupo'?'Em grupo · '+esc((p.instr||[]).join(', ')||'dança/teatro'):'Música · '+esc((p.instr||[]).join(', ')||'sem instrumento')}</small>${p.tipo==='grupo'?'':`<br><span class="chip neutral">${money(p.valorHora)}/hora</span>`}</div></div>
+  ${CLOUD&&me.role==='sec'?secCard():''}${profs().length?`<div class="cards">${profs().map(p=>`<div class="card"><div class="row">${avatar(p,true)}<div style="flex:1;min-width:0"><b style="font-size:1.05rem;overflow-wrap:anywhere">${esc(p.name)}</b><br><small>${p.tipo==='grupo'?'Em grupo · '+esc((p.instr||[]).join(', ')||'dança/teatro'):'Música · '+esc((p.instr||[]).join(', ')||'sem instrumento')}</small>${p.tipo==='grupo'?'':`<br><span class="chip neutral">${money(p.valorHora)}/hora</span>`}</div></div>
    <div style="min-width:0"><small style="overflow-wrap:anywhere">${esc(p.email)}<br>Pix: ${p.pix?esc(p.pix):'não cadastrado'}</small></div>
    <div class="row"><button class="btn sm ghost" data-act="editProf" data-id="${p.id}">Editar</button><button class="btn sm dark" data-act="resetPass" data-id="${p.id}">${CLOUD?'Enviar link de senha':'Nova senha'}</button></div></div>`).join('')}</div>`:'<div class="empty">Nenhum professor cadastrado.</div>'}`}
 function profForm(p){
@@ -607,7 +644,7 @@ function vPerfil(){
 function aulaModal(l){
   const p=uget(l.profId),isSec=me.role==='sec',n=now();
   const canMark=true;
-  let info=`<div class="row">${chip(l.status)}<span class="chip neutral">${fmtDL(l.date)}</span></div><div><b style="font-size:1.1rem">${esc(titleOf(l))}</b><br><small>${esc(subOf(l))}${isSec&&p?' · '+esc(p.name):''}</small></div>${l.motivo?`<div class="banner">Motivo: ${esc(l.motivo)}</div>`:''}${l.repoOf?'<small>Esta é uma reposição.</small>':''}`;
+  let info=`<div class="row">${chip(l.status)}<span class="chip neutral">${fmtDL(l.date)}</span></div><div><b style="font-size:1.1rem">${esc(titleOf(l))}</b><br><small>${esc(subOf(l))}${isSec&&p?' · '+esc(p.name):''}</small></div>${l.motivo?`<div class="banner">Motivo: ${esc(l.motivo)}</div>`:''}${l.repoOf?'<small>Esta é uma reposição.</small>':''}${l.porNome?`<small>Última alteração: ${esc(l.porNome)} · ${fmtTs(l.porEm)}</small>`:''}`;
   let acts=`<button class="btn ghost" data-act="closeModal">Fechar</button>`;
   if(isSec){
     if(l.status==='pontuada')acts=`<button class="btn ok" data-act="confirmAula" data-id="${l.id}">Confirmar aula dada</button>`+acts;
@@ -644,11 +681,12 @@ document.addEventListener('change',e=>{
   try{chg(t.dataset.chg,t)}catch(err){console.error(err)}});
 
 function chg(k,t){
-  if(k==='agProf'){ui.ag.prof=t.value;render()}
+  if(k==='regF'){ui.regF=t.value;render()}
+  else if(k==='agProf'){ui.ag.prof=t.value;render()}
   else if(k==='alProf'){ui.aluno.prof=t.value;render()}
   else if(k==='payYm'){ui.pay.ym=t.value||defYm();render()}
-  else if(k==='photo'){const f=t.files[0];if(f)resizeImg(f,256,d=>{me.photo=d;save();render();toast('Foto atualizada')})}
-  else if(k==='logo'){const f=t.files[0];if(f)resizeImg(f,256,d=>{db.school.logo=d;save();render();toast('Logo atualizada')},true)}
+  else if(k==='photo'){const f=t.files[0];t.value='';if(f)cropImg(f,'photo',d=>{me.photo=d;save();render();toast('Foto atualizada')})}
+  else if(k==='logo'){const f=t.files[0];t.value='';if(f)cropImg(f,'logo',d=>{db.school.logo=d;save();render();toast('Logo atualizada')})}
   else if(k==='pfTipo'){const g=t.value==='grupo';$('#pfInstrLbl').textContent=g?'Modalidade':'Instrumentos que ensina';$('#pfValWrap').hidden=g;$('#pfInstr').innerHTML=(g?['Dança','Teatro']:INSTR).map(i=>`<label class="pill"><input type="checkbox" value="${i}">${i}</label>`).join('')}
   else if(k==='aulaProf'){fillAlunoSel()}
   else if(k==='altQ'){const a=t.value==='1h';$('#altA').hidden=!a;$('#altB').hidden=a;$('#altHintA').hidden=!a;$('#altHintB').hidden=a}
@@ -940,7 +978,7 @@ function rules(op,seg,res,nw,uid){
     if(seg[0]==='usuarios'){const id=seg[1];
       if(op==='get')ok=uid===id||perfil().role==='dono'||(perfil().role==='sec'&&perfil().escolaId===R().escolaId);
       else if(op==='list')ok=perfil().role==='dono'||(perfil().role==='sec'&&perfil().escolaId===R().escolaId);
-      else if(op==='create')ok=perfil().role==='dono'||(perfil().role==='sec'&&nw.role==='prof'&&nw.escolaId===perfil().escolaId);
+      else if(op==='create')ok=perfil().role==='dono'||(perfil().role==='sec'&&(nw.role==='prof'||nw.role==='sec')&&nw.escolaId===perfil().escolaId);
       else if(op==='update')ok=(uid===id&&soCampos(['name','palette','photo','pix']))||gerir(R(),nw);
       else if(op==='delete')ok=gerir(R(),R());
     }else if(seg[0]==='cobrancas'){ok=perfil().role==='dono';
@@ -955,8 +993,9 @@ function rules(op,seg,res,nw,uid){
         if(col==='alunos'||col==='grupos'){ok=rd?(gestor(e)||(profDe(e)&&R().profId===uid)):gestor(e)}
         else if(col==='aulas'){
           if(rd)ok=gestor(e)||(profDe(e)&&R().profId===uid);
-          else if(op==='update')ok=gestor(e)||(profDe(e)&&R().profId===uid&&soCampos(['status','motivo']));
+          else if(op==='update')ok=gestor(e)||(profDe(e)&&R().profId===uid&&soCampos(['status','motivo','porId','porNome','porEm'])&&nw.porId===uid);
           else ok=gestor(e)}
+        else if(col==='log'){if(rd)ok=gestor(e);else if(op==='create')ok=membro(e)&&nw.porId===uid;else ok=false}
         else if(col==='datas'||col==='avisos'){ok=rd?membro(e):gestor(e)}
         else if(col==='extras'||col==='valores'){ok=gestor(e)}
         else if(col==='alertas'){
@@ -991,13 +1030,15 @@ M.doc=(fs,...p)=>({path:p.join('/'),seg:p.join('/').split('/'),kind:'doc'});
 M.collection=(fs,...p)=>({path:p.join('/'),seg:p.join('/').split('/'),kind:'col',cons:[]});
 M.where=(f,op,v)=>({f,op,v});
 M.query=(c,...cons)=>({...c,cons:[...(c.cons||[]),...cons]});
+M.orderBy=(f,d)=>({ord:f,dir:d});M.limit=n=>({lim:n});
 const idOf=p=>p.split('/').pop();
 const inCol=(col,path)=>path.startsWith(col+'/')&&path.slice(col.length+1).indexOf('/')<0;
-const match=(d,cons)=>cons.every(c=>c.op==='=='&&JSON.stringify(d[c.f])===JSON.stringify(c.v));
+const match=(d,cons)=>cons.every(c=>c.ord||c.lim||(c.op==='=='&&JSON.stringify(d[c.f])===JSON.stringify(c.v)));
 function resProxy(cons){const m={};cons.forEach(c=>{if(c.op==='==')m[c.f]=c.v});return new Proxy(m,{get(t,k){if(k in t)return t[k];throw new Error('campo sem filtro: '+String(k))}})}
 function snapOf(ref){
   if(ref.kind==='doc'){const d=store[ref.path];return{id:idOf(ref.path),exists:()=>d!==undefined,data:()=>clone(d)}}
-  const docs=Object.keys(store).filter(p=>inCol(ref.path,p)&&match(store[p],ref.cons||[])).sort().map(p=>({id:idOf(p),data:()=>clone(store[p])}));
+  let docs=Object.keys(store).filter(p=>inCol(ref.path,p)&&match(store[p],ref.cons||[])).sort().map(p=>({id:idOf(p),data:()=>clone(store[p])}));
+  for(const c of (ref.cons||[])){if(c.ord)docs.sort((x,y)=>{const a=x.data()[c.ord],b=y.data()[c.ord];return c.dir==='desc'?(b>a?1:b<a?-1:0):(a>b?1:a<b?-1:0)});if(c.lim)docs=docs.slice(0,c.lim)}
   return{docs,size:docs.length}}
 function readCheck(ref){
   const uid=curUid();
@@ -1045,19 +1086,39 @@ async function notify(title,body,tag,force){
     if(!force&&document.visibilityState==='visible')return;
     const reg=await swReg();const o={body:String(body||''),icon:'icon-192.png',badge:'icon-192.png',tag:tag||undefined};
     if(reg&&reg.showNotification)reg.showNotification(title,o);else new Notification(title,o)}catch(e){}}
+function secCard(){
+  const L=db.users.filter(u=>u.role==='sec');
+  return`<div class="card"><div class="row sp"><h3>Secretárias da escola</h3><button class="btn sm" data-act="newSec">${ico('plus')}Adicionar secretária</button></div>
+  <small>Cada secretária entra com o próprio e-mail e tem o próprio nome e foto de perfil. A logo da escola é uma só, e fica em Perfil.</small>
+  <div class="stack">${L.map(u=>`<div class="row">${avatar(u)}<div style="flex:1;min-width:0"><b>${esc(u.name)}</b>${u.id===me.id?' <span class="chip neutral">você</span>':''}<br><small style="overflow-wrap:anywhere">${esc(u.email)}</small></div>${u.id===me.id?'':`<button class="btn sm dark" data-act="resetPass" data-id="${u.id}">Enviar link de senha</button>`}</div>`).join('')}</div></div>`}
+async function saveSecCloud(){
+  const nome=val('scNome').trim(),email=val('scEmail').trim();
+  if(!nome||!email){toast('Preencha nome e e-mail.');return}
+  if(db.users.some(u=>norm(u.email)===norm(email))){toast('Já existe alguém com esse e-mail.');return}
+  toast('Criando o acesso…');
+  try{
+    const nid=await createAuthUser(email);
+    db.users.push({id:nid,role:'sec',name:nome,email,palette:'compasso',photo:'',escolaId:CL.eid});
+    save();const ok=await flush();
+    if(!ok){toast('O acesso foi criado, mas o cadastro não salvou. Confira a internet e tente "Enviar link de senha".');render();return}
+    await FB.M.sendPasswordResetEmail(FB.auth,email);
+    closeModal();render();toast('Secretária cadastrada. Ela recebeu um e-mail para criar a senha.'+(DEMO?' Na simulação, a senha é 123456.':''));
+  }catch(e){toast(authErr(e))}}
 function installCard(){
   const perm='Notification' in window?Notification.permission:'indisponivel';
   const inst=isStandalone();
-  return`<div class="card inst"><h3>Instalar o Compasso e receber avisos</h3>
-  <small>Com o app instalado, o ícone do Compasso fica na tela inicial e mostra o <b>número de avisos não lidos</b>.</small>
+  return`<div class="card inst"><h3>Instalar a Compasso e receber avisos</h3>
+  <small>Com o app instalado, o ícone da Compasso fica na tela inicial e mostra o <b>número de avisos não lidos</b>.</small>
   <div class="row">${inst?'<span class="chip ok">App instalado neste aparelho</span>':(__bip?`<button class="btn sm" data-act="pwaInstall">${ico('dl')}Instalar agora</button>`:'')}
   ${perm==='granted'?'<span class="chip ok">Avisos ativados</span>':perm==='denied'?'<span class="chip bad">Avisos bloqueados no navegador</span>':`<button class="btn sm ghost" data-act="notifOn">Ativar avisos</button>`}</div>
-  <details><summary>Android (Chrome)</summary><ol><li>Abra o Compasso no <b>Chrome</b>.</li><li>Toque nos <b>três pontinhos</b>, no canto superior direito.</li><li>Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>).</li><li>Confirme em <b>Instalar</b>. O ícone aparece na tela inicial.</li><li>Abra o app instalado e toque em <b>Ativar avisos</b>, aqui no Perfil.</li></ol></details>
-  <details><summary>iPhone (Safari)</summary><ol><li>Abra o Compasso no <b>Safari</b>. Outro navegador não serve.</li><li>Toque no botão <b>Compartilhar</b>, o quadrado com uma seta para cima.</li><li>Role e toque em <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>.</li><li>Abra o app pelo ícone e toque em <b>Ativar avisos</b>. Precisa do iOS 16.4 ou mais novo.</li></ol></details>
-  <details><summary>Computador (Chrome ou Edge)</summary><ol><li>Abra o Compasso no navegador.</li><li>Na barra de endereço, à direita, clique no ícone de <b>instalar</b>, um monitor com uma seta.</li><li>Clique em <b>Instalar</b>. O Compasso abre como um programa, com ícone na área de trabalho.</li><li>Dentro do app, clique em <b>Ativar avisos</b> e permita.</li></ol></details>
+  <details><summary>Android (Chrome)</summary><ol><li>Abra a Compasso no <b>Chrome</b>.</li><li>Toque nos <b>três pontinhos</b>, no canto superior direito.</li><li>Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>).</li><li>Confirme em <b>Instalar</b>. O ícone aparece na tela inicial.</li><li>Abra o app instalado e toque em <b>Ativar avisos</b>, aqui no Perfil.</li></ol></details>
+  <details><summary>iPhone (Safari)</summary><ol><li>Abra a Compasso no <b>Safari</b>. Outro navegador não serve.</li><li>Toque no botão <b>Compartilhar</b>, o quadrado com uma seta para cima.</li><li>Role e toque em <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>.</li><li>Abra o app pelo ícone e toque em <b>Ativar avisos</b>. Precisa do iOS 16.4 ou mais novo.</li></ol></details>
+  <details><summary>Computador (Chrome ou Edge)</summary><ol><li>Abra a Compasso no navegador.</li><li>Na barra de endereço, à direita, clique no ícone de <b>instalar</b>, um monitor com uma seta.</li><li>Clique em <b>Instalar</b>. A Compasso abre como um programa, com ícone na área de trabalho.</li><li>Dentro do app, clique em <b>Ativar avisos</b> e permita.</li></ol></details>
   <small>Os avisos aparecem com o app aberto ou minimizado. Com o app totalmente fechado, o número no ícone só atualiza quando você abre de novo.</small></div>`}
 function pwaAct(a,t){
   switch(a){
+  case'newSec':openModal('Adicionar secretária',`<label class="fld"><span>Nome</span><input type="text" id="scNome" autocomplete="off"></label><label class="fld"><span>E-mail</span><input type="email" id="scEmail" autocomplete="off"></label><small>Ela recebe um e-mail para criar a senha.</small>`,'<button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn" data-act="saveSec">Cadastrar</button>');return true;
+  case'saveSec':saveSecCloud();return true;
   case'pwaInstall':if(__bip){__bip.prompt();__bip.userChoice.finally(()=>{__bip=null;render()})}else toast('Use o passo a passo abaixo, para o seu aparelho.');return true;
   case'notifOn':if(!('Notification' in window)){toast('Este navegador não mostra avisos. No iPhone, instale o app na Tela de Início primeiro.');return true}
     Notification.requestPermission().then(p=>{toast(p==='granted'?'Avisos ativados neste aparelho.':'Os avisos não foram permitidos.');render();if(p==='granted')notify('Compasso','Pronto! Os avisos vão aparecer aqui.','teste',true)});return true;
@@ -1138,6 +1199,7 @@ function startSchool(eid,mode){
     sub('users',M.query(M.collection(fs,'usuarios'),M.where('escolaId','==',eid)),s=>incoming('users',docs(s)));
     ['alunos','grupos','aulas','datas','extras','avisos'].forEach(c=>sub(c,E(c),s=>incoming(c,docs(s))));
     sub('alertas',M.query(E('alertas'),M.where('to','==','sec')),s=>incoming('alertas',docs(s)));
+    sub('log',M.query(E('log'),M.orderBy('em','desc'),M.limit(300)),s=>incoming('log',docs(s)));
     sub('valores',E('valores'),s=>{const m={};s.docs.forEach(d=>{m[d.id]=d.data()});incoming('valores',m)});
   }else{
     sub('users',M.doc(fs,'usuarios',uidc),s=>incoming('users',s.exists()?[{...s.data(),id:s.id}]:[]));
@@ -1148,6 +1210,17 @@ function startSchool(eid,mode){
 }
 const docs=s=>s.docs.map(d=>({...d.data(),id:d.id}));
 const SORT={users:(a,b)=>String(a.name).localeCompare(String(b.name)),alunos:(a,b)=>String(a.nome).localeCompare(String(b.nome)),grupos:(a,b)=>String(a.nome).localeCompare(String(b.nome)),avisos:(a,b)=>(b.ts||0)-(a.ts||0),alertas:(a,b)=>(b.ts||0)-(a.ts||0),datas:(a,b)=>String(a.ini).localeCompare(String(b.ini))};
+const STAMP=['porId','porNome','porEm'];
+function plain(col,o){const c=cleanOf(col,o);STAMP.forEach(k=>delete c[k]);return c}
+const fmtTs=ms=>{const d=new Date(ms);return pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+pad(d.getHours())+':'+pad(d.getMinutes())};
+const ROLEN={dono:'Dona',sec:'Secretária',prof:'Professor'};
+function logTxt(col,o){let t='';try{
+  if(col==='aulas')t=titleOf(o)+' · '+fmtDL(o.date)+' '+(o.time||'')+' · '+((ST[o.status]||[0,o.status])[1]);
+  else if(col==='alunos'||col==='grupos')t=o.nome||'';
+  else if(col==='datas')t=(o.nome||o.titulo||o.title||'')+' '+(o.ini||'');
+  else t=o.nome||o.titulo||o.title||o.text||o.texto||o.id||''}catch(e){t=String(o&&o.id||'')}
+  return String(t).slice(0,120)}
+const COLN={aulas:'aula',alunos:'aluno',grupos:'grupo',datas:'data',extras:'extra',avisos:'aviso'};
 function cleanOf(col,o){const c=JSON.parse(JSON.stringify(o));delete c.id;
   if(col==='users'){delete c.valorHora;delete c.pass;delete c.mustChange;c.escolaId=CL.eid}
   if(col==='alunos'){delete c.valor}
@@ -1161,13 +1234,14 @@ function incoming(col,data){
   const go=()=>{
     if(CL.eid==null&&col!=='x')return;
     if(col==='school'){db.school=data;CL.shadow.school=stable(data);const bl=!(me&&me.dono)&&cobStatus(data).s==='bloq';if(bl!==!!CL.blockedFlag){const was=CL.blockedFlag;CL.blockedFlag=bl;if(was&&!bl){const e2=CL.eid,m2=CL.mode;setTimeout(()=>startSchool(e2,m2),50)}else render()}}
+    else if(col==='log'){db.log=data.sort((a,b)=>(b.em||0)-(a.em||0))}
     else if(col==='valores'){CL.val=data;applyVal();CL.shadow.valores=stable(valMap())}
     else if(col==='alertas'){db.alertas=data.sort(SORT.alertas);const fresh=CL.ready?data.filter(a=>!a.read&&!(CL.seenA||{})[a.id]):[];CL.seenA=Object.fromEntries(data.map(a=>[a.id,1]));fresh.forEach(a=>notify('Compasso',a.text,a.id));CL.shadow.alertas=Object.fromEntries(data.map(a=>[a.id,!!a.read]))}
     else{
       if(SORT[col])data.sort(SORT[col]);
       db[col]=data;
       if(col==='users'||col==='alunos')applyVal();
-      CL.shadow[col]=Object.fromEntries(data.map(o=>[o.id,stable(cleanOf(col,o))]));
+      CL.shadow[col]=Object.fromEntries(data.map(o=>[o.id,stable(plain(col,o))]));CL.txt=CL.txt||{};data.forEach(o=>{CL.txt[col+'/'+o.id]=logTxt(col,o)});
       if(col==='users'&&me&&!me.dono){const n=uget(me.id);if(n)me=n}
     }
     CL.loaded[col]=true;
@@ -1193,8 +1267,10 @@ async function syncNow(){
       for(const col of(sec?DIFF_SEC:DIFF_PROF)){
         const cur={};db[col].forEach(o=>{cur[o.id]=o});const sh=CL.shadow[col]||{};
         const ref=id=>col==='users'?M.doc(fs,'usuarios',id):M.doc(fs,'escolas',eid,col,id);
-        for(const id in cur){const data=cleanOf(col,cur[id]),s=stable(data);if(sh[id]!==s)ops.push({set:[ref(id),data],after:()=>{(CL.shadow[col]=CL.shadow[col]||{})[id]=s}})}
-        if(sec)for(const id in sh){if(!cur[id]&&!(col==='users'&&id===CL.uid))ops.push({del:ref(id),after:()=>{delete CL.shadow[col][id]}})}
+        for(const id in cur){const d0=plain(col,cur[id]),s=stable(d0);if(sh[id]!==s){const data=col==='users'?d0:{...d0,porId:me.id,porNome:me.name,porEm:Date.now()};const novo=sh[id]===undefined;
+          ops.push({set:[ref(id),data],after:()=>{(CL.shadow[col]=CL.shadow[col]||{})[id]=s}});
+          if(col!=='users'){const tx=logTxt(col,cur[id]);CL.txt=CL.txt||{};CL.txt[col+'/'+id]=tx;ops.push({set:[M.doc(fs,'escolas',eid,'log','l'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)),{em:Date.now(),porId:me.id,porNome:me.name,porRole:me.dono?'dono':me.role,col,docId:id,acao:novo?'criou':'alterou',txt:tx}]})}}}
+        if(sec)for(const id in sh){if(!cur[id]&&!(col==='users'&&id===CL.uid)){ops.push({del:ref(id),after:()=>{delete CL.shadow[col][id]}});if(col!=='users')ops.push({set:[M.doc(fs,'escolas',eid,'log','l'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)),{em:Date.now(),porId:me.id,porNome:me.name,porRole:me.dono?'dono':me.role,col,docId:id,acao:'apagou',txt:(CL.txt&&CL.txt[col+'/'+id])||''}]})}}
       }
       if(sec){
         const vm=valMap(),old=CL.val||{};
@@ -1281,7 +1357,7 @@ function cobStatus(e){
 const isBlocked=()=>CLOUD&&me&&!me.dono&&CL.mode&&cobStatus(db.school).s==='bloq';
 function cobBanner(){
   if(!CLOUD||!me||me.dono||me.role!=='sec')return'';const c=cobStatus(db.school);
-  if(c.s==='breve')return`<div class="banner">A mensalidade do Compasso ${c.d===0?'vence hoje':'vence em '+c.d+' dia'+(c.d>1?'s':'')} (${fmtD(db.school.proxVenc)}). Fale com o suporte para combinar o pagamento.</div>`;
+  if(c.s==='breve')return`<div class="banner">A mensalidade da Compasso ${c.d===0?'vence hoje':'vence em '+c.d+' dia'+(c.d>1?'s':'')} (${fmtD(db.school.proxVenc)}). Fale com o suporte para combinar o pagamento.</div>`;
   if(c.s==='atraso'){const f=DIAS_BLOQ+1-c.atraso;return`<div class="banner" style="border-color:var(--bad);background:var(--bad-bg)">Mensalidade atrasada há ${c.atraso} dia${c.atraso>1?'s':''}. O acesso da escola será suspenso em ${f} dia${f>1?'s':''} se o pagamento não for feito.</div>`}
   return''}
 function suspendedView(){return`<div class="login"><div class="bgl" style="background-image:url('${LG_MARK}')"></div><div class="login-card"><img class="lg-full" src="${LG_FULL}" alt="Compasso"><h2 style="margin:0;text-align:center">Acesso suspenso</h2><p style="margin:0;color:var(--muted);text-align:center">A mensalidade da escola está atrasada. Fale com o suporte para regularizar. Assim que o pagamento for registrado, o acesso volta.</p><button class="btn dark" data-act="logout">Sair</button></div></div>`}
@@ -1370,7 +1446,6 @@ function cloudRender(){
   return false}
 /* cortina de teatro: abre quando o app está pronto */
 function curtain(){
-  if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   const c=document.createElement('div');c.id='curtain';
   c.innerHTML=`<div class="cp l"></div><div class="cp r"></div><div class="pel"></div><div class="ct"><img class="lg-full" src="${LG_FULL}" alt="Compasso">${staffHtml()}</div>`;
   document.body.appendChild(c);const t0=Date.now();let opened=false;
