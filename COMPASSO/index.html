@@ -52,7 +52,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--b1);outline:0;box-sha
 .who{display:flex;align-items:center;gap:10px;padding:10px;border-radius:18px;background:rgba(255,255,255,.1);color:#fff}.who small{color:#C9CFD8}
 .who b{display:block;line-height:1.2}.who small{display:block}
 .scrim{display:none}
-.main{min-width:0;display:flex;flex-direction:column;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px}
+.main{min-width:0;display:flex;flex-direction:column;background-color:var(--bg);background-image:none}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:flex;align-items:center;gap:10px;padding:12px var(--gy) 12px var(--gx);background:var(--surface);color:var(--ink);border-bottom:1.5px solid var(--line)}
 .top::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:4px;background:linear-gradient(90deg,var(--b1),var(--b2))}
 .top h1{font-size:1rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -173,7 +173,7 @@ td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 
 .brand img.lg-ic{border:0;border-radius:0;object-fit:contain;width:36px;height:36px;flex:none}
 .top-logo{width:36px;height:36px;object-fit:contain;flex:none;margin-left:2px}
-.bgl.sch{background-size:contain;opacity:.10}
+.bgl.sch{background-size:contain;background-position:center center;opacity:.13;overflow:hidden}.bgl.sch::before{content:'';position:absolute;inset:-60px;background:inherit;background-size:cover;filter:blur(36px);opacity:.55}
 .top-logo.sch{width:40px;height:40px;border-radius:10px;object-fit:contain}
 .by{display:flex;align-items:center;justify-content:center;gap:6px;padding:18px 0 8px;opacity:.55;font-size:.7rem}
 .by img{height:16px;width:auto}
@@ -316,7 +316,7 @@ function seed(){
       {id:'a5',profId:'u_p3',grupoId:'g1',nome:'Bia Nunes',valor:180},{id:'a6',profId:'u_p3',grupoId:'g1',nome:'Davi Castro',valor:180},{id:'a7',profId:'u_p3',grupoId:'g1',nome:'Lara Pires',valor:150}
     ],
     grupos:[{id:'g1',profId:'u_p3',nome:'Ballet infantil'}],
-    aulas:[],datas:[],extras:[],alertas:[],avisos:[],alertKeys:{}};
+    aulas:[],datas:[],extras:[],vales:[],alertas:[],avisos:[],alertKeys:{}};
   db=d;
   const t=now(),ym=t.getFullYear()+'-'+pad(t.getMonth()+1);
   const first=ym+'-01';
@@ -433,8 +433,8 @@ function resizeImg(file,max,cb,png){const r=new FileReader();r.onload=()=>{const
 function applyPalette(){const p=PALS[(me&&me.palette)||'compasso']||PALS.compasso;const r=document.documentElement;Object.keys(p.v).forEach(k=>r.style.setProperty(k,p.v[k]))}
 
 /* ---------- navegação ---------- */
-const NAV_SEC=[['registro','Registro de ações','hist'],['painel','Painel de controle','home'],['agenda','Agenda','cal'],['profs','Professores','users'],['alunos','Alunos e grupos','book'],['datas','Datas e avisos','flag'],['pagto','Pagamento e planilhas','sheet'],['perfil','Perfil','user']];
-const NAV_PROF=[['inicio','Início','home'],['aulas','Minhas aulas','cal'],['avisos','Avisos','bell'],['perfil','Perfil','user']];
+const NAV_SEC=[['registro','Registro de ações','hist'],['painel','Painel de controle','home'],['resumo','Resumo de aulas','sheet'],['agenda','Agenda','cal'],['profs','Professores','users'],['alunos','Alunos e grupos','book'],['datas','Datas e avisos','flag'],['pagto','Pagamento e planilhas','sheet'],['perfil','Perfil','user']];
+const NAV_PROF=[['inicio','Início','home'],['aulas','Minhas aulas','cal'],['resumo','Resumo de aulas','sheet'],['vales','Meus vales','sheet'],['avisos','Avisos','bell'],['perfil','Perfil','user']];
 const navList=()=>me.role==='sec'?(CLOUD?NAV_SEC:NAV_SEC.filter(n=>n[0]!=='registro')):NAV_PROF;
 const cur=()=>ui.stack[ui.stack.length-1];
 function go(v,reset){if(reset)ui.stack=[{v}];else ui.stack.push({v});ui.drawer=false;render()}
@@ -469,7 +469,7 @@ function vRegistro(){
   return`<div class="row sp"><h2>Registro de ações</h2><label class="fld" style="min-width:200px"><span>Pessoa</span><select data-chg="regF"><option value="">Todas</option>${pessoas.map(([id,n])=>`<option value="${esc(id)}" ${id===f?'selected':''}>${esc(n)}</option>`).join('')}</select></label></div>
   <small>Cada marcação, cadastro ou alteração fica gravada com o nome de quem fez e não pode ser apagada.</small>
   ${R.length?`<div class="stack">${R.map(x=>`<div class="card"><div class="row sp"><b>${esc(x.porNome||'')} <span class="chip neutral">${ROLEN[x.porRole]||''}</span></b><small>${fmtTs(x.em)}</small></div><div><span class="chip ${x.acao==='apagou'?'bad':x.acao==='criou'?'ok':'info'}">${x.acao==='criou'?'Cadastrou':x.acao==='apagou'?'Apagou':'Alterou'} ${COLN[x.col]||''}</span> <small>${esc(x.txt||'')}</small></div></div>`).join('')}</div>`:'<div class="empty">Ainda não há ações registradas.</div>'}`}
-function viewHtml(v){const f={painel:vPainel,agenda:vAgenda,profs:vProfs,alunos:vAlunos,datas:vDatas,pagto:vPagto,perfil:vPerfil,inicio:vInicio,aulas:vAgenda,avisos:vAvisos,registro:vRegistro}[v];return f?f():''}
+function viewHtml(v){const f={painel:vPainel,agenda:vAgenda,profs:vProfs,alunos:vAlunos,datas:vDatas,pagto:vPagto,perfil:vPerfil,inicio:vInicio,aulas:vAgenda,avisos:vAvisos,registro:vRegistro,resumo:vResumo,vales:vVales}[v];return f?f():''}
 
 /* ---------- login ---------- */
 function loginView(){return`<div class="login"><form class="login-card" id="loginForm" onsubmit="return false">
@@ -513,7 +513,7 @@ function vAgenda(){
    <div class="seg" role="group" aria-label="Visão">${[['dia','Dia'],['semana','Semana'],['mes','Mês']].map(m=>`<button data-act="agMode" data-v="${m[0]}" aria-pressed="${A.mode===m[0]}">${m[1]}</button>`).join('')}</div></div>
    <div class="row sp"><div class="row"><button class="btn sm ghost" data-act="agPrev">‹</button><button class="btn sm ghost" data-act="agToday">Hoje</button><button class="btn sm ghost" data-act="agNext">›</button></div>
    <b>${agTitle()}</b></div>
-   <div class="row">${isSec?`<button class="btn sm" data-act="newAula">${ico('plus')}Marcar horário</button><button class="btn sm ghost" data-act="newExp">${ico('plus')}Aula experimental</button>`:`<button class="btn sm ghost" data-act="closeDayForm" data-d="${A.date}">Não vou dar aula neste dia</button>`}${A.mode==='dia'?`<button class="btn sm dark" data-act="markDay" data-d="${A.date}">Marcar aulas do dia</button>`:''}</div></div>`;
+   <div class="row">${isSec?`<button class="btn sm" data-act="newAula">${ico('plus')}Marcar horário</button><button class="btn sm ghost" data-act="newExp">${ico('plus')}Aula experimental</button><button class="btn sm danger" data-act="secCloseDayForm" data-d="${A.date}">Cancelar o dia do professor</button>`:`<button class="btn sm ghost" data-act="closeDayForm" data-d="${A.date}">Não vou dar aula neste dia</button>`}${A.mode==='dia'?`<button class="btn sm dark" data-act="markDay" data-d="${A.date}">Marcar aulas do dia</button>`:''}</div></div>`;
   if(!pid)return head+'<div class="empty">Cadastre um professor para começar a agenda.</div>';
   let body='';
   if(A.mode==='dia')body=dayBlock(A.date,L,isSec);
@@ -542,7 +542,7 @@ function vInicio(){
   const when=l=>l.date===ts?'Hoje':l.date===addD(ts,1)?'Amanhã':fmtDL(l.date);
   const di=dayInfo(ts);
   return`${nx?`<div class="next"><small style="color:inherit;opacity:.8;font-weight:700;text-transform:uppercase;letter-spacing:.08em">Próximo aluno</small><div class="big">${nx.time}</div><b style="font-size:1.2rem">${esc(titleOf(nx))}</b><span>${when(nx)} · ${esc(subOf(nx))}</span><div class="row"><button class="btn dark" data-act="openAula" data-id="${nx.id}">Abrir aula</button></div></div>`:'<div class="empty">Nenhuma aula marcada pela frente.</div>'}
-  <div class="card"><h3>Hoje</h3>${di?`<div class="banner">${TIPO[di.tipo]}: ${esc(di.nome)}. Sem aula neste dia.</div>`:''}${hoje.length?hoje.map(l=>lessonRow(l)).join(''):'<div class="empty">Sem aulas hoje.</div>'}
+  <div class="card"><div class="row sp"><h3>Hoje</h3><button class="btn sm ghost" data-act="closeDayForm" data-d="${ts}">Não vou dar aula hoje</button></div>${di?`<div class="banner">${TIPO[di.tipo]}: ${esc(di.nome)}. Sem aula neste dia.</div>`:''}${hoje.length?hoje.map(l=>lessonRow(l)).join(''):'<div class="empty">Sem aulas hoje.</div>'}
   <div class="row">${hoje.some(l=>l.status==='agendada')?`<button class="btn dark sm" data-act="markDay" data-d="${ts}">Marcar aulas de hoje</button>`:''}<button class="btn ghost sm" data-act="nav" data-v="aulas">Ver minhas aulas</button></div></div>`}
 
 /* ---------- avisos (professor) ---------- */
@@ -572,6 +572,16 @@ function profForm(p){
 
 /* ---------- alunos e grupos ---------- */
 const buscaHtml=()=>`<div class="card"><label class="fld"><span>Buscar aluno pelo nome</span><input type="text" id="alBusca" data-inp="alBusca" placeholder="Digite o nome do aluno" autocomplete="off"></label><div id="alRes" style="display:grid;gap:8px"></div></div>`;
+const PRAZO_REP=60;
+const limRep=l=>addD(l.date,PRAZO_REP);
+const vencida=l=>l.status==='remarcar'&&l.kind==='ind'&&today()>limRep(l);
+function abertasHtml(a){
+  const L=db.aulas.filter(l=>l.alunoId===a.id&&l.kind==='ind'&&l.status==='remarcar').sort((x,y)=>x.date.localeCompare(y.date));
+  if(!L.length)return'';
+  const ok=L.filter(l=>!vencida(l)),ve=L.filter(vencida);
+  return`<div class="aberto" style="margin-top:8px">${ok.length?`<span class="chip warn">Aulas em aberto: ${ok.length}</span>`:''}`
+   +ok.map(l=>`<div class="row sp" style="margin-top:6px"><small>Aula de ${fmtD(l.date)} · repor até <b>${fmtD(limRep(l))}</b></small><button class="btn sm" data-act="remForm" data-id="${l.id}">Remarcar</button></div>`).join('')
+   +ve.map(l=>`<div style="margin-top:6px"><small>Vencida: aula de ${fmtD(l.date)} (prazo de ${PRAZO_REP} dias acabou, não conta no pagamento)</small></div>`).join('')+'</div>'}
 function vAlunos(){
   const ps=profs();if(!ui.aluno.prof||!uget(ui.aluno.prof))ui.aluno.prof=(ps[0]||{}).id;const p=uget(ui.aluno.prof);
   if(!p)return'<div class="empty">Cadastre um professor primeiro.</div>';
@@ -584,7 +594,7 @@ function vAlunos(){
       <div class="form">${fld('Nome do aluno','gaN'+g.id,'')}${fld('Valor mensal (R$)','gaV'+g.id,'','number','step="0.01" min="0" inputmode="decimal"')}</div><div class="row"><button class="btn sm" data-act="addGAluno" data-id="${g.id}">${ico('plus')}Adicionar aluno</button></div></div>`}).join('')+'</div>':'<div class="empty">Este professor ainda não tem grupos. O nome do grupo é você quem escolhe.</div>'}`}
   const al=db.alunos.filter(a=>a.profId===p.id&&!a.grupoId);const opts=(p.instr&&p.instr.length?p.instr:INSTR);
   return`${buscaHtml()}<div class="card">${sel}</div><div class="card"><h3>Novo aluno de ${esc(p.name)}</h3><div class="form">${fld('Nome','alNome','')}${selF('Instrumento','alInstr',opts.map(i=>({v:i,t:i})),opts[0])}</div><div class="row"><button class="btn" data-act="addAluno">${ico('plus')}Adicionar aluno</button></div></div>
-  <div class="card"><h3>Alunos (${al.length})</h3><div class="list">${al.map(a=>`<div class="item" data-n="${esc(nrm(a.nome))}"><div class="g"><b>${esc(a.nome)}</b><small>${esc(a.instr)}</small></div><button class="btn sm ghost" data-act="delAluno" data-id="${a.id}">Remover</button></div>`).join('')||'<div class="empty">Nenhum aluno ainda.</div>'}</div></div>`}
+  <div class="card"><h3>Alunos (${al.length})</h3><div class="list">${al.map(a=>`<div class="item" data-n="${esc(nrm(a.nome))}"><div class="g"><b>${esc(a.nome)}</b><small>${esc(a.instr)}</small>${abertasHtml(a)}</div><button class="btn sm ghost" data-act="delAluno" data-id="${a.id}">Remover</button></div>`).join('')||'<div class="empty">Nenhum aluno ainda.</div>'}</div></div>`}
 
 /* ---------- datas e avisos ---------- */
 function vDatas(){
@@ -598,12 +608,14 @@ function vDatas(){
 
 /* ---------- pagamento ---------- */
 function defYm(){const t=now();const d=new Date(t.getFullYear(),t.getMonth()-(t.getDate()>=10?1:1),1);return d.getFullYear()+'-'+pad(d.getMonth()+1)}
+const valeMes=d0=>{const d=pd(d0);if(d.getDate()<=10)d.setMonth(d.getMonth()-1);return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+const valePg=mes=>{const d=pd(mes+'-01');d.setMonth(d.getMonth()+1);return '10/'+pad(d.getMonth()+1)};
 function payroll(ym){
   const evs=db.datas.filter(x=>x.tipo==='evento'&&(mkey(x.ini)===ym||mkey(x.fim)===ym));
   return profs().map(p=>{
     const L=db.aulas.filter(a=>a.profId===p.id&&mkey(a.date)===ym).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
     const ind=L.filter(l=>l.kind==='ind');
-    const r={p,L,dadas:ind.filter(l=>l.status==='confirmada').length,faltas:ind.filter(l=>l.status==='falta_confirmada').length,canc:ind.filter(l=>l.status==='cancelada_paga').length};
+    const r={p,L,dadas:ind.filter(l=>l.status==='confirmada'&&!l.desc).length,faltas:ind.filter(l=>l.status==='falta_confirmada').length,canc:ind.filter(l=>l.status==='cancelada_paga').length};
     r.horas=r.dadas+r.faltas+r.canc;
     r.naoDadas=L.filter(l=>l.kind!=='exp'&&['cancelada_nada','remarcar','remarcada'].includes(l.status)).length;
     r.sem=L.filter(l=>l.status==='sem_aula'&&!l.evt).length;
@@ -613,14 +625,51 @@ function payroll(ym){
     if(p.tipo==='grupo'){const gs=db.grupos.filter(g=>g.profId===p.id).map(g=>g.id);r.valor=db.alunos.filter(a=>gs.includes(a.grupoId)).reduce((s,a)=>s+(a.valor||0),0)}
     else r.valor=r.horas*(p.valorHora||0);
     r.extras=db.extras.filter(e=>e.profId===p.id&&e.mes===ym);r.extraSum=r.extras.reduce((s,e)=>s+e.valor,0);
-    r.total=r.valor+r.extraSum;r.evs=evs;return r})}
+    r.desc=ind.filter(l=>l.desc&&!l.repoOf).length;r.vl=(db.vales||[]).filter(v=>v.profId===p.id&&v.status==='aprovado'&&v.mes===ym);r.valeSum=r.vl.reduce((s,v)=>s+v.valor,0);
+    r.total=r.valor+r.extraSum-r.valeSum;r.evs=evs;return r})}
+const RES_LINHAS=[
+ ['dadas','Ministradas','Aulas confirmadas',l=>l.status==='confirmada'],
+ ['faltas','Faltas pagas','O aluno faltou e a aula conta',l=>l.status==='falta_confirmada'],
+ ['tarde','Cancelamento em cima da hora','Aviso com menos de 1h, aula paga',l=>l.status==='cancelada_paga'],
+ ['nd','Não dadas','Canceladas sem pagamento',l=>l.status==='cancelada_nada'],
+ ['rem','Remarcadas','Foram para outra data',l=>l.status==='remarcada'],
+ ['aberta','Para remarcar (em aberto)','Prazo de 60 dias para repor',l=>l.status==='remarcar'&&!vencida(l)],
+ ['venc','Vencidas','Passaram dos 60 dias, não contam no pagamento',l=>vencida(l)],
+ ['desc','Descontadas do professor','Informadas no dia, sem aviso antecipado',l=>!!l.desc&&!l.repoOf],
+ ['aguard','Aguardando confirmação','Ainda não confirmadas pela secretaria',l=>['agendada','pontuada','falta_pontuada'].includes(l.status)]];
+function vResumo(){
+  const sec=me.role==='sec';const R=ui.res=ui.res||{};if(!R.ym)R.ym=mkey(today());
+  const ps=profs();if(!sec)R.prof=me.id;else if(R.prof&&R.prof!=='todos'&&!ps.find(p=>p.id===R.prof))R.prof='todos';else if(!R.prof)R.prof='todos';
+  const L=db.aulas.filter(l=>l.kind==='ind'&&mkey(l.date)===R.ym&&(R.prof==='todos'||l.profId===R.prof)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const filtro=sec?selF('Professor','resProf',[{v:'todos',t:'Todos os professores'}].concat(ps.map(p=>({v:p.id,t:p.name}))),R.prof,'data-chg="resProf"'):'';
+  return`<div class="card"><div class="row sp">${fld('Mês','resYm',R.ym,'month','data-chg="resYm"')}${filtro}</div><small>Conta só as aulas individuais. Aulas experimentais e em grupo ficam de fora.</small></div>
+  <div class="card"><h3>Resumo · ${MON[+R.ym.slice(5)-1]} de ${R.ym.slice(0,4)}</h3><div class="list">
+  ${RES_LINHAS.map(r=>{const X=L.filter(r[3]);const op=R.open===r[0];
+   return`<div class="item"><button class="g" style="text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer" data-act="resOpen" data-k="${r[0]}"><b>${r[1]}</b><small>${r[2]}</small></button><span class="chip ${X.length?'neutral':'dash'}">${X.length}</span></div>
+   ${op?`<div class="card flat">${X.length?X.map(l=>`<div class="row sp" style="margin:4px 0"><small>${fmtD(l.date)} ${l.time} · ${esc(titleOf(l))}${R.prof==='todos'&&uget(l.profId)?' · '+esc(uget(l.profId).name):''}${l.status==='remarcar'?' · repor até '+fmtD(limRep(l)):''}</small></div>`).join(''):'<small>Nenhuma aula.</small>'}</div>`:''}`}).join('')}
+  </div></div>`}
+function valesCard(ym){
+  const V=db.vales||[];const ped=V.filter(v=>v.status==='pedido'),apr=V.filter(v=>v.status==='aprovado'&&v.mes===ym);
+  const nm=v=>esc((uget(v.profId)||{}).name||'');
+  return`<div class="card"><div class="row sp"><h3>Vales</h3><button class="btn sm" data-act="newVale">${ico('plus')}Lançar vale</button></div>
+   <small>O vale aprovado é descontado no próximo pagamento (dia 10).</small>
+   ${ped.length?`<div class="list">${ped.map(v=>`<div class="item"><div class="g"><b>${nm(v)} pediu ${money(v.valor)}</b><small>${fmtD(v.data)}${v.obs?' · '+esc(v.obs):''}</small></div><button class="btn sm" data-act="aprVale" data-id="${v.id}">Aprovar</button><button class="btn sm ghost" data-act="recVale" data-id="${v.id}">Recusar</button></div>`).join('')}</div>`:''}
+   <div class="list">${apr.map(v=>`<div class="item"><div class="g"><b>${nm(v)} · −${money(v.valor)}</b><small>Descontado na folha de ${ymLabel(ym)}${v.obs?' · '+esc(v.obs):''}</small></div><button class="btn sm ghost" data-act="delVale" data-id="${v.id}">Remover</button></div>`).join('')||(ped.length?'':'<div class="empty">Nenhum vale neste mês.</div>')}</div></div>`}
+function vVales(){
+  const V=(db.vales||[]).filter(v=>v.profId===me.id).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const falta=V.filter(v=>v.status==='aprovado'&&v.mes>=defYm()).reduce((s,v)=>s+v.valor,0);
+  const ch={pedido:['warn','Aguardando a secretaria'],aprovado:['ok','Aprovado'],recusado:['dash','Recusado']};
+  return`<div class="card"><h3>Pedir um vale</h3><div class="form">${fld('Valor (R$)','vlVal','','number','step="0.01" min="0.01" inputmode="decimal"')}</div>${areaF('Para que é (opcional)','vlObs','')}<div class="row"><button class="btn" data-act="pedirVale">Pedir vale</button></div><small>Se a secretaria aprovar, o valor é descontado no seu próximo pagamento.</small></div>
+  <div class="card"><div class="row sp"><h3>Meus vales</h3>${falta?`<span class="chip warn">A descontar: ${money(falta)}</span>`:''}</div>
+  <div class="list">${V.map(v=>`<div class="item"><div class="g"><b>${money(v.valor)}</b><small>${fmtD(v.data)}${v.obs?' · '+esc(v.obs):''}${v.status==='aprovado'?' · desconta no pagamento de '+valePg(v.mes):''}</small></div><span class="chip ${ch[v.status][0]}">${ch[v.status][1]}</span></div>`).join('')||'<div class="empty">Você ainda não pediu vales.</div>'}</div></div>`}
 function vPagto(){
   if(!ui.pay.ym)ui.pay.ym=defYm();const ym=ui.pay.ym;const R=payroll(ym);const tot=R.reduce((s,r)=>s+r.total,0);
   const exAll=db.extras.filter(e=>e.mes===ym);
   return`<div class="card"><div class="row sp">${fld('Mês','payYm',ym,'month','data-chg="payYm"')}<div><small>O pagamento fecha todo dia 10, com o mês anterior.</small></div></div></div>
-  <div class="card"><div class="row sp"><h3>Folha de pagamento · ${MON[+ym.slice(5)-1]} de ${ym.slice(0,4)}</h3><b>${money(tot)}</b></div>
-   <div class="scroll"><table><thead><tr><th>Professor</th><th>Pix</th><th class="r">Aulas pagas</th><th class="r">Não dadas</th><th class="r">Eventos</th><th class="r">Aulas</th><th class="r">Extras</th><th class="r">Total</th></tr></thead><tbody>
-   ${R.map(r=>`<tr><td><b>${esc(r.p.name)}</b></td><td>${r.p.pix?esc(r.p.pix):'<small>não cadastrado</small>'}</td><td class="r">${r.p.tipo==='grupo'?'mês cheio':r.horas}</td><td class="r">${r.naoDadas}</td><td class="r">${r.evDias}</td><td class="r">${money(r.valor)}</td><td class="r">${money(r.extraSum)}</td><td class="r"><b>${money(r.total)}</b></td></tr>`).join('')}</tbody></table></div>
+  ${valesCard(ym)}<div class="card"><div class="row sp"><h3>Folha de pagamento · ${MON[+ym.slice(5)-1]} de ${ym.slice(0,4)}</h3><b>${money(tot)}</b></div>
+   <div class="scroll"><table><thead><tr><th>Professor</th><th>Pix</th><th class="r">Aulas pagas</th><th class="r">Não dadas</th><th class="r">Descontadas</th><th class="r">Eventos</th><th class="r">Aulas</th><th class="r">Extras</th><th class="r">Vales</th><th class="r">Total</th></tr></thead><tbody>
+   ${R.map(r=>`<tr><td><b>${esc(r.p.name)}</b></td><td>${r.p.pix?esc(r.p.pix):'<small>não cadastrado</small>'}</td><td class="r">${r.p.tipo==='grupo'?'mês cheio':r.horas}</td><td class="r">${r.naoDadas}</td><td class="r">${r.desc}</td><td class="r">${r.evDias}</td><td class="r">${money(r.valor)}</td><td class="r">${money(r.extraSum)}</td><td class="r">${r.valeSum?'−'+money(r.valeSum):money(0)}</td><td class="r"><b>${money(r.total)}</b></td></tr>`).join('')}</tbody></table></div>
+   ${R.some(r=>r.total<0)?`<div class="banner">Há professor com saldo negativo neste mês, por causa de vales.</div>`:''}
    ${R.some(r=>r.aberto)?`<div class="banner">Há aulas ainda sem confirmação neste mês (${R.reduce((s,r)=>s+r.aberto,0)}). Elas não entram no valor até serem confirmadas.</div>`:''}
    <div class="row"><button class="btn" data-act="expFolha" data-f="xlsx">${ico('dl')}Folha em Excel</button><button class="btn" data-act="expFolha" data-f="pdf">${ico('dl')}Folha em PDF</button></div></div>
   <div class="card"><h3>Planilha de controle de aulas</h3><small>Todas as aulas do mês, com a situação de cada uma.</small><div class="row"><button class="btn ghost" data-act="expCtrl" data-f="xlsx">${ico('dl')}Controle em Excel</button><button class="btn ghost" data-act="expCtrl" data-f="pdf">${ico('dl')}Controle em PDF</button></div></div>
@@ -649,6 +698,8 @@ function aulaModal(l){
   if(isSec){
     if(l.status==='pontuada')acts=`<button class="btn ok" data-act="confirmAula" data-id="${l.id}">Confirmar aula dada</button>`+acts;
     if(l.status==='falta_pontuada')acts=`<button class="btn ok" data-act="confirmFalta" data-id="${l.id}">Confirmar falta</button>`+acts;
+    if(isSec&&l.desc&&!l.repoOf)info+=`<div class="banner">Aula informada no dia, sem aviso antecipado: está descontada do professor. Se vocês combinaram antes, tire o desconto.</div>`;
+    if(isSec&&l.desc&&!l.repoOf)acts=`<button class="btn ghost" data-act="tirarDesc" data-id="${l.id}">Tirar o desconto do professor</button>`+acts;
     if(l.status==='remarcar')acts=`<button class="btn" data-act="remForm" data-id="${l.id}">Remarcar/Repor</button><button class="btn danger" data-act="cancelForm" data-id="${l.id}">Cancelar aula</button>`+acts;
     if(l.status==='agendada'&&canMark){if(l.kind!=='grupo')acts=`<button class="btn danger" data-act="secFalta" data-id="${l.id}">${l.kind==='exp'?'Aluno não foi':'Aluno faltou'}</button>`+acts;acts=`<button class="btn ok" data-act="secDada" data-id="${l.id}">${l.kind==='exp'?'Aluno foi':'Aula dada'}</button>`+acts}
     if(l.status==='agendada'||l.status==='pontuada'||l.status==='falta_pontuada')acts=`<button class="btn ghost" data-act="altForm" data-id="${l.id}">Alterar aula</button>`+acts;
@@ -684,6 +735,8 @@ function chg(k,t){
   if(k==='regF'){ui.regF=t.value;render()}
   else if(k==='agProf'){ui.ag.prof=t.value;render()}
   else if(k==='alProf'){ui.aluno.prof=t.value;render()}
+  else if(k==='resYm'){ui.res=ui.res||{};ui.res.ym=t.value||mkey(today());render()}
+  else if(k==='resProf'){ui.res=ui.res||{};ui.res.prof=t.value;render()}
   else if(k==='payYm'){ui.pay.ym=t.value||defYm();render()}
   else if(k==='photo'){const f=t.files[0];t.value='';if(f)cropImg(f,'photo',d=>{me.photo=d;save();render();toast('Foto atualizada')})}
   else if(k==='logo'){const f=t.files[0];t.value='';if(f)cropImg(f,'logo',d=>{db.school.logo=d;save();render();toast('Logo atualizada')})}
@@ -749,6 +802,7 @@ function act(a,t,ev){
   case'lateDada':{const l=lget(id);l.status='cancelada_paga';l.motivo='Aviso em cima da hora';addAlert(l.profId,'Aula contada como dada (aviso em cima da hora): '+titleOf(l)+' · '+fmtD(l.date)+' '+l.time+'.','info');save();closeModal();render();toast('Aula contada como dada para o professor');break}
   case'cancelForm':cancelForm(lget(id));break;
   case'doCancel':doCancel(lget(id));break;
+  case'resOpen':{ui.res=ui.res||{};ui.res.open=ui.res.open===t.dataset.k?'':t.dataset.k;render();break}
   case'remForm':remForm(lget(id));break;
   case'doRem':doRem(lget(id));break;
   case'confirmAula':{const l=lget(id);l.status='confirmada';save();closeModal();render();toast('Aula confirmada');confetti(ev.clientX,ev.clientY);break}
@@ -766,9 +820,16 @@ function act(a,t,ev){
   case'grupoOk':{const l=lget(id);l.status='confirmada';save();closeModal();render();toast('Aula do grupo confirmada');confetti(ev.clientX,ev.clientY);break}
   case'expFoi':case'expNao':{const l=lget(id);if(a==='expNao'&&travaProf(l)){toast('O horário já passou. Peça para a secretaria marcar.');break}l.status=a==='expFoi'?'exp_foi':'exp_nao';addAlert('sec',(uget(l.profId)||{}).name+': aluno '+(a==='expFoi'?'foi':'não foi')+' na aula experimental de '+fmtD(l.date)+' '+l.time+'.','info');save();closeModal();render();toast('Registrado');break}
   case'closeSlotForm':{const l=lget(id);openModal('Aula não dada',`<div><b>${fmtD(l.date)} · ${l.time}</b><br><small>${esc(titleOf(l))}</small></div>${areaF('Motivo','csMot','')}`,`<button class="btn ghost" data-act="closeModal">Voltar</button><button class="btn danger" data-act="doCloseSlot" data-id="${id}">Informar</button>`);break}
-  case'doCloseSlot':{const m=val('csMot').trim();if(!m){toast('Escreva o motivo.');break}const l=lget(id);if(travaProf(l)){toast('O horário já passou. Peça para a secretaria marcar.');break}l.status='remarcar';l.motivo=m;addAlert('sec',(uget(l.profId)||{}).name+' informou aula não dada: '+titleOf(l)+' · '+fmtD(l.date)+' '+l.time+'. Motivo: '+m,'warn');save();closeModal();render();toast('Informado. A secretaria foi avisada.');break}
-  case'closeDayForm':{const d=t.dataset.d;openModal('Fechar o dia',`<div><b>${fmtDL(d)}</b></div>${areaF('Motivo','cdMot','')}`,`<button class="btn ghost" data-act="closeModal">Voltar</button><button class="btn danger" data-act="doCloseDay" data-d="${d}">Fechar o dia</button>`);break}
-  case'doCloseDay':{const m=val('cdMot').trim();if(!m){toast('Escreva o motivo.');break}const d=t.dataset.d;let n=0;db.aulas.forEach(l=>{if(l.profId===me.id&&l.date===d&&l.status==='agendada'&&!passou(l)){l.status='remarcar';l.motivo=m;n++}});addAlert('sec',me.name+' fechou o dia '+fmtD(d)+' ('+n+' aula'+(n===1?'':'s')+' para remarcar). Motivo: '+m,'warn');save();closeModal();render();toast('Dia fechado. A secretaria foi avisada.');break}
+  case'doCloseSlot':{const m=val('csMot').trim();if(!m){toast('Escreva o motivo.');break}const l=lget(id);if(travaProf(l)){toast('O horário já passou. Peça para a secretaria marcar.');break}l.status='remarcar';l.motivo=m;if(l.date<=today())l.desc=true;addAlert('sec',(uget(l.profId)||{}).name+' informou aula não dada: '+titleOf(l)+' · '+fmtD(l.date)+' '+l.time+'. Motivo: '+m,'warn');save();closeModal();render();toast('Informado. A secretaria foi avisada.');break}
+  case'secCloseDayForm':{const d=t.dataset.d||today();const ps=profs();if(!ps.length){toast('Cadastre um professor primeiro.');break}
+    openModal('Cancelar o dia do professor',`<div class="form">${selF('Professor','scdProf',ps.map(p=>({v:p.id,t:p.name})),ui.ag.prof||ps[0].id)}${fld('Dia','scdData',d,'date')}</div>${areaF('Motivo','scdMot','')}<small>Todas as aulas ainda agendadas desse dia viram "Para remarcar". Nada é cobrado do aluno e o aluno ganha o prazo de 60 dias para repor. O professor é avisado.</small>`,`<button class="btn ghost" data-act="closeModal">Voltar</button><button class="btn danger" data-act="doSecCloseDay">Cancelar o dia</button>`);break}
+  case'doSecCloseDay':{const m=val('scdMot').trim(),pid=val('scdProf'),d=val('scdData');if(!d){toast('Escolha o dia.');break}if(!m){toast('Escreva o motivo.');break}
+    let n=0;db.aulas.forEach(l=>{if(l.profId===pid&&l.date===d&&['agendada','pontuada'].includes(l.status)){l.status='remarcar';l.motivo=m;n++}});
+    if(!n){toast('Esse professor não tem aulas agendadas neste dia.');break}
+    const pn=(uget(pid)||{}).name||'Professor';addAlert(pid,'A secretaria cancelou o seu dia '+fmtD(d)+' ('+n+' aula'+(n===1?'':'s')+'). Motivo: '+m,'warn');
+    save();closeModal();render();toast('Dia cancelado: '+n+' aula'+(n===1?'':'s')+' para remarcar.');break}
+  case'closeDayForm':{const d=t.dataset.d;openModal('Fechar o dia',`<div><b>${fmtDL(d)}</b></div>${areaF('Motivo','cdMot','')}<small>${d===today()?'Atenção: avisar no próprio dia, sem antecedência, faz o desconto dessas aulas no seu pagamento.':'Avisando com antecedência, as aulas ficam para remarcar e nada é descontado.'}</small>`,`<button class="btn ghost" data-act="closeModal">Voltar</button><button class="btn danger" data-act="doCloseDay" data-d="${d}">Fechar o dia</button>`);break}
+  case'doCloseDay':{const m=val('cdMot').trim();if(!m){toast('Escreva o motivo.');break}const d=t.dataset.d;if(d<today()){toast('Só dá para fechar o dia de hoje em diante.');break}const pen=d===today();let n=0;db.aulas.forEach(l=>{if(l.profId===me.id&&l.date===d&&l.status==='agendada'&&!passou(l)){l.status='remarcar';l.motivo=m;if(pen)l.desc=true;n++}});addAlert('sec',me.name+' fechou o dia '+fmtD(d)+' ('+n+' aula'+(n===1?'':'s')+' para remarcar'+(pen?', informado no dia: descontar do professor':'')+'). Motivo: '+m,'warn');save();closeModal();render();toast('Dia fechado. A secretaria foi avisada.');break}
   /* datas e avisos */
   case'newData':openModal('Data importante',`<div class="form">${selF('Tipo','dtTipo',[{v:'recesso',t:'Recesso'},{v:'facultativo',t:'Ponto facultativo'},{v:'evento',t:'Evento'}],'evento')}${fld('Nome (no evento, qual é o evento)','dtNome','','text','placeholder="Ex.: Recital de fim de ano"')}${fld('Data inicial','dtIni',today(),'date')}${fld('Data final (se for mais de um dia)','dtFim','','date')}</div><small>Nesses dias as aulas são canceladas, sem reposição e sem pagamento. Todos os professores recebem o aviso.</small>`,'<button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn" data-act="saveData">Salvar</button>');break;
   case'saveData':{const tipo=val('dtTipo'),nome=val('dtNome').trim()||TIPO[tipo],ini=val('dtIni'),fim=val('dtFim')||ini;if(!ini){toast('Escolha a data.');break}if(fim<ini){toast('A data final vem depois da inicial.');break}if(tipo==='evento'&&!val('dtNome').trim()){toast('Escreva qual é o evento.');break}
@@ -781,6 +842,17 @@ function act(a,t,ev){
   /* extras e exportações */
   case'newExtra':openModal('Lançar extra',`<div class="form">${selF('Professor','exProf',profs().map(p=>({v:p.id,t:p.name})),(profs()[0]||{}).id)}${fld('Valor (R$)','exVal','','number','step="0.01" min="0.01" inputmode="decimal"')}</div>${areaF('Justificativa','exJus','','Ex.: Recital')}<small>O extra só soma no pagamento de ${MON[+ui.pay.ym.slice(5)-1]}.</small>`,'<button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn" data-act="saveExtra">Lançar</button>');break;
   case'saveExtra':{const v=num(val('exVal')),j=val('exJus').trim();if(v<=0){toast('O extra só soma: use um valor maior que zero.');break}if(!j){toast('Escreva a justificativa.');break}db.extras.push({id:uid('x'),profId:val('exProf'),mes:ui.pay.ym,valor:v,just:j});save();closeModal();render();toast('Extra lançado');break}
+  case'tirarDesc':{const l=lget(id);if(!l||me.role!=='sec')break;delete l.desc;db.aulas.forEach(x=>{if(x.repoOf===l.id)delete x.desc});addAlert(l.profId,'O desconto da aula de '+titleOf(l)+' em '+fmtD(l.date)+' foi retirado pela secretaria.','warn');save();closeModal();render();toast('Desconto retirado. A reposição conta no pagamento.');break}
+  case'pedirVale':{const v=num(val('vlVal'));if(v<=0){toast('Digite o valor do vale.');break}
+    (db.vales=db.vales||[]).push({id:uid('v'),profId:me.id,valor:v,obs:val('vlObs').trim(),status:'pedido',data:today()});
+    addAlert('sec',me.name+' pediu um vale de '+money(v)+'.','warn');save();render();toast('Pedido enviado para a secretaria.');break}
+  case'aprVale':{const v=(db.vales||[]).find(x=>x.id===id);if(!v)break;v.status='aprovado';v.mes=valeMes(today());addAlert(v.profId,'Seu vale de '+money(v.valor)+' foi aprovado. Desconto no pagamento de '+valePg(v.mes)+'.','warn');save();render();toast('Vale aprovado.');break}
+  case'recVale':{const v=(db.vales||[]).find(x=>x.id===id);if(!v)break;v.status='recusado';addAlert(v.profId,'Seu pedido de vale de '+money(v.valor)+' foi recusado.','warn');save();render();toast('Pedido recusado.');break}
+  case'delVale':db.vales=(db.vales||[]).filter(x=>x.id!==id);save();render();break;
+  case'newVale':openModal('Lançar vale',`<div class="form">${selF('Professor','vlProf',profs().map(p=>({v:p.id,t:p.name})),(profs()[0]||{}).id)}${fld('Valor (R$)','vlVal','','number','step="0.01" min="0.01" inputmode="decimal"')}</div>${areaF('Observação (opcional)','vlObs','')}<small>O vale entra já aprovado e é descontado no próximo pagamento.</small>`,`<button class="btn ghost" data-act="closeModal">Voltar</button><button class="btn" data-act="saveVale">Lançar</button>`);break
+  case'saveVale':{const v=num(val('vlVal'));if(v<=0){toast('Digite o valor do vale.');break}const pid=val('vlProf');if(!pid){toast('Escolha o professor.');break}
+    (db.vales=db.vales||[]).push({id:uid('v'),profId:pid,valor:v,obs:val('vlObs').trim(),status:'aprovado',data:today(),mes:valeMes(today())});
+    addAlert(pid,'Foi lançado um vale de '+money(v)+' para você. Desconto no próximo pagamento.','warn');save();closeModal();render();toast('Vale lançado.');break}
   case'delExtra':db.extras=db.extras.filter(x=>x.id!==id);save();render();break;
   case'expFolha':expFolha(t.dataset.f);break;
   case'expCtrl':expCtrl(t.dataset.f);break;
@@ -793,7 +865,7 @@ function act(a,t,ev){
   case'simSet':{const d=val('simD'),h=val('simT');if(!d||!h)break;const tg=new Date(d+'T'+h+':00');db.offset=tg.getTime()-Date.now();save();render();toast('Modo de teste ligado');break}
   case'simReset':db.offset=0;save();render();break;
   case'resetAll':openModal('Apagar tudo?','<p style="margin:0">Isso apaga professores, alunos, aulas e avisos de teste. Fica só a conta da secretaria.</p>','<button class="btn ghost" data-act="closeModal">Voltar</button><button class="btn danger" data-act="doReset">Apagar tudo</button>');break;
-  case'doReset':{const s=db.users.find(u=>u.role==='sec');db={v:1,school:db.school,offset:0,demo:false,users:[s],alunos:[],grupos:[],aulas:[],datas:[],extras:[],alertas:[],avisos:[],alertKeys:{}};save();closeModal();ui.stack=[{v:'painel'}];render();toast('Tudo limpo');break}
+  case'doReset':{const s=db.users.find(u=>u.role==='sec');db={v:1,school:db.school,offset:0,demo:false,users:[s],alunos:[],grupos:[],aulas:[],datas:[],extras:[],vales:[],alertas:[],avisos:[],alertKeys:{}};save();closeModal();ui.stack=[{v:'painel'}];render();toast('Tudo limpo');break}
   case'savePassNew':{const a1=val('mcA'),b1=val('mcB');if(a1.length<6){toast('Use pelo menos 6 caracteres.');break}if(a1!==b1){toast('As duas senhas precisam ser iguais.');break}me.pass=a1;me.mustChange=false;save();closeModal();toast('Senha trocada');break}
   }}
 function markForm(pid,date){
@@ -816,7 +888,7 @@ function saveMark(pid,date,ev){
   for(const l of L){if(radio('mk_'+l.id)==='nd'&&!val('mkm_'+l.id).trim()){toast('Escreva o motivo da aula não dada: '+l.time+' · '+titleOf(l)+'.');return}}
   L.forEach(l=>{
     const v=radio('mk_'+l.id);if(!['dada','falta','nd'].includes(v))return;if(travaProf(l)&&v!=='dada')return;
-    if(v==='nd'){l.status='remarcar';l.motivo=val('mkm_'+l.id).trim();nd++;return}
+    if(v==='nd'){l.status='remarcar';l.motivo=val('mkm_'+l.id).trim();if(me.role==='prof')l.desc=true;nd++;return}
     if(l.kind==='exp')l.status=v==='dada'?'exp_foi':'exp_nao';
     else if(l.kind==='grupo')l.status='confirmada';
     else if(v==='dada')l.status=isSec?'confirmada':'pontuada';
@@ -882,6 +954,7 @@ function doCancel(l){
   addAlert(l.profId,'Aula cancelada: '+titleOf(l)+' · '+set.map(x=>fmtD(x.date)).join(', ')+(status==='cancelada_paga'?' (paga).':'.'),'warn');
   save();closeModal();render();toast(set.length+' aula'+(set.length>1?'s canceladas':' cancelada'))}
 function remForm(l){
+  if(vencida(l)){toast('O prazo de '+PRAZO_REP+' dias para repor esta aula acabou.');return}
   openModal(l.status==='remarcar'?'Repor aula':'Remarcar aula',`<div><b>${esc(titleOf(l))}</b><br><small>${fmtD(l.date)} · ${esc(subOf(l))}</small></div>
   ${l.status==='remarcar'?'':`<div class="fld"><span>Quais aulas</span><div class="checks"><label class="pill"><input type="radio" name="rScope" value="so" checked>Só esta aula</label><label class="pill"><input type="radio" name="rScope" value="mes">Esta e as próximas do mês</label></div></div>`}
   <div class="form">${fld('Nova data','rData',l.date,'date')}${fld('Nova hora','rHora',l.time,'time')}</div>
@@ -891,7 +964,7 @@ function doRem(l){
   const scope=radio('rScope')||'so',nd=val('rData'),nt=val('rHora');if(!nd||!nt){toast('Escolha data e hora.');return}
   if(scope==='so'){
     const di=dayInfo(nd);if(di){toast('Esse dia é '+TIPO[di.tipo].toLowerCase()+': '+di.nome+'.');return}
-    const n={id:uid('l'),profId:l.profId,kind:l.kind,alunoId:l.alunoId,grupoId:l.grupoId,date:nd,time:nt,dur:l.dur,status:'agendada',repoOf:l.id};
+    const n={id:uid('l'),profId:l.profId,kind:l.kind,alunoId:l.alunoId,grupoId:l.grupoId,date:nd,time:nt,dur:l.dur,status:'agendada',repoOf:l.id,...(l.desc?{desc:true}:{})};
     const c=conflictOf(n,l.id);if(c){toast(c);return}
     db.aulas.push(n);l.status='remarcada';
     addAlert(l.profId,'Aula remarcada: '+titleOf(l)+' de '+fmtD(l.date)+' '+l.time+' para '+fmtD(nd)+' '+nt+'.','warn');
@@ -927,7 +1000,7 @@ function expFolha(f){
     }else{
       const d=pdfNew(esc0+' · Folha de pagamento','Referência: '+ymLabel(ym)+' · Eventos do mês: '+evs);
       d.autoTable({startY:84,head:[head],body:rows.map(r=>r.map((c,i)=>i>=9?money(c):c)),styles:{fontSize:8,cellPadding:4},headStyles:{fillColor:[10,10,10]},foot:[['Total geral',...Array(10).fill(''),money(R.reduce((s,r)=>s+r.total,0))]],footStyles:{fillColor:[218,218,218],textColor:[10,10,10]}});
-      R.forEach(r=>{d.addPage();d.setFont('helvetica','bold');d.setFontSize(14);d.text(r.p.name+' · '+ymLabel(ym),40,48);d.setFont('helvetica','normal');d.setFontSize(10);d.text('Pix: '+(r.p.pix||'não cadastrado')+' · Total a receber: '+money(r.total)+' (aulas '+money(r.valor)+' + extras '+money(r.extraSum)+')',40,66);
+      R.forEach(r=>{d.addPage();d.setFont('helvetica','bold');d.setFontSize(14);d.text(r.p.name+' · '+ymLabel(ym),40,48);d.setFont('helvetica','normal');d.setFontSize(10);d.text('Pix: '+(r.p.pix||'não cadastrado')+' · Total a receber: '+money(r.total)+' (aulas '+money(r.valor)+' + extras '+money(r.extraSum)+' - vales '+money(r.valeSum)+')',40,66);
         d.autoTable({startY:80,head:[['Data','Hora','Aluno/Grupo','Situação','Motivo','Conta']],body:r.L.map(l=>[fmtD(l.date),l.time,titleOf(l),statusTxt(l),l.motivo||'',l.kind==='ind'&&['confirmada','falta_confirmada','cancelada_paga'].includes(l.status)?'Sim':'Não']),styles:{fontSize:8,cellPadding:3},headStyles:{fillColor:[10,10,10]}});
         if(r.extras.length)d.autoTable({startY:d.lastAutoTable.finalY+14,head:[['Extra','Justificativa']],body:r.extras.map(e=>[money(e.valor),e.just]),styles:{fontSize:8},headStyles:{fillColor:[10,10,10]}})});
       saveFile('folha-'+ym+'.pdf',d.output('blob'))}
@@ -1130,13 +1203,13 @@ if(DEMO&&!window.__FB_MOCK)window.__FB_MOCK=__makeDemoMock();
 const CLOUD=!!(FIREBASE_CONFIG||window.__FB_MOCK);
 let FB=null;
 const CL={state:'boot',uid:null,eid:null,mode:null,unsubs:[],mUnsubs:[],shadow:{},val:{},loaded:{},ready:false,dirty:false,run:false,t:null,q:[],rPend:false,escolas:[],secs:[],cob:{},errAt:0};
-const COLS_SEC=['school','users','alunos','grupos','aulas','datas','extras','avisos','alertas','valores'];
-const COLS_PROF=['school','users','alunos','grupos','aulas','datas','avisos','alertas'];
-const DIFF_SEC=['users','alunos','grupos','aulas','datas','extras','avisos'];
-const DIFF_PROF=['users','aulas'];
+const COLS_SEC=['school','users','alunos','grupos','aulas','datas','extras','vales','avisos','alertas','valores'];
+const COLS_PROF=['school','users','alunos','grupos','aulas','datas','vales','avisos','alertas'];
+const DIFF_SEC=['users','alunos','grupos','aulas','datas','extras','vales','avisos'];
+const DIFF_PROF=['users','aulas','vales'];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function stable(o){if(o===null||typeof o!=='object')return JSON.stringify(o);if(Array.isArray(o))return'['+o.map(stable).join(',')+']';return'{'+Object.keys(o).sort().filter(k=>o[k]!==undefined).map(k=>JSON.stringify(k)+':'+stable(o[k])).join(',')+'}'}
-function blankDb(){return{v:1,school:{name:'',logo:''},offset:0,demo:false,users:[],alunos:[],grupos:[],aulas:[],datas:[],extras:[],alertas:[],avisos:[],alertKeys:{}}}
+function blankDb(){return{v:1,school:{name:'',logo:''},offset:0,demo:false,users:[],alunos:[],grupos:[],aulas:[],datas:[],extras:[],vales:[],alertas:[],avisos:[],alertKeys:{}}}
 function authErr(e){const c=(e&&e.code)||'';
   if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c))return'E-mail ou senha incorretos.';
   if(/too-many-requests/.test(c))return'Muitas tentativas. Espere alguns minutos e tente de novo.';
@@ -1197,7 +1270,7 @@ function startSchool(eid,mode){
   sub('school',M.doc(fs,'escolas',eid),s=>incoming('school',s.exists()?{name:s.data().name||'',logo:s.data().logo||'',proxVenc:s.data().proxVenc||'',liberadaAte:s.data().liberadaAte||''}:{name:'',logo:'',proxVenc:'',liberadaAte:''}));
   if(sec){
     sub('users',M.query(M.collection(fs,'usuarios'),M.where('escolaId','==',eid)),s=>incoming('users',docs(s)));
-    ['alunos','grupos','aulas','datas','extras','avisos'].forEach(c=>sub(c,E(c),s=>incoming(c,docs(s))));
+    ['alunos','grupos','aulas','datas','extras','vales','avisos'].forEach(c=>sub(c,E(c),s=>incoming(c,docs(s))));
     sub('alertas',M.query(E('alertas'),M.where('to','==','sec')),s=>incoming('alertas',docs(s)));
     sub('log',M.query(E('log'),M.orderBy('em','desc'),M.limit(300)),s=>incoming('log',docs(s)));
     sub('valores',E('valores'),s=>{const m={};s.docs.forEach(d=>{m[d.id]=d.data()});incoming('valores',m)});
@@ -1205,6 +1278,7 @@ function startSchool(eid,mode){
     sub('users',M.doc(fs,'usuarios',uidc),s=>incoming('users',s.exists()?[{...s.data(),id:s.id}]:[]));
     ['alunos','grupos','aulas'].forEach(c=>sub(c,M.query(E(c),M.where('profId','==',uidc)),s=>incoming(c,docs(s))));
     ['datas','avisos'].forEach(c=>sub(c,E(c),s=>incoming(c,docs(s))));
+    sub('vales',M.query(E('vales'),M.where('profId','==',uidc)),s=>incoming('vales',docs(s)));
     sub('alertas',M.query(E('alertas'),M.where('to','==',uidc)),s=>incoming('alertas',docs(s)));
   }
 }
@@ -1217,10 +1291,11 @@ const ROLEN={dono:'Dona',sec:'Secretária',prof:'Professor'};
 function logTxt(col,o){let t='';try{
   if(col==='aulas')t=titleOf(o)+' · '+fmtDL(o.date)+' '+(o.time||'')+' · '+((ST[o.status]||[0,o.status])[1]);
   else if(col==='alunos'||col==='grupos')t=o.nome||'';
+  else if(col==='vales')t='Vale '+money(o.valor||0)+' · '+((uget(o.profId)||{}).name||'')+' · '+(o.status||'');
   else if(col==='datas')t=(o.nome||o.titulo||o.title||'')+' '+(o.ini||'');
   else t=o.nome||o.titulo||o.title||o.text||o.texto||o.id||''}catch(e){t=String(o&&o.id||'')}
   return String(t).slice(0,120)}
-const COLN={aulas:'aula',alunos:'aluno',grupos:'grupo',datas:'data',extras:'extra',avisos:'aviso'};
+const COLN={aulas:'aula',alunos:'aluno',grupos:'grupo',datas:'data',extras:'extra',vales:'vale',avisos:'aviso'};
 function cleanOf(col,o){const c=JSON.parse(JSON.stringify(o));delete c.id;
   if(col==='users'){delete c.valorHora;delete c.pass;delete c.mustChange;c.escolaId=CL.eid}
   if(col==='alunos'){delete c.valor}
