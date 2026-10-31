@@ -350,7 +350,7 @@ const TIPO={feriado:'Feriado',recesso:'Recesso',facultativo:'Ponto facultativo',
 /* ---------- aulas ---------- */
 const ACTIVE=['agendada','pontuada','confirmada','falta_pontuada','falta_confirmada','exp_foi','exp_nao'];
 const ST={agendada:['neutral','Agendada'],pontuada:['info','Aguardando a secretaria'],confirmada:['ok','Confirmada'],falta_pontuada:['warn','Faltou · aguardando'],falta_confirmada:['bad','Faltou · paga'],remarcar:['warn','Remarcar'],remarcada:['dash','Remarcada'],cancelada_nada:['dash','Cancelada'],cancelada_paga:['bad','Aviso tardio · paga'],sem_aula:['dash','Sem aula'],exp_foi:['ok','Experimental: foi'],exp_nao:['dash','Experimental: não foi']};
-const users=()=>db.users, SOLO=()=>!!(db.school&&db.school.solo), profs=()=>SOLO()?db.users.filter(u=>u.role==='sec').slice(0,1):db.users.filter(u=>u.role==='prof'), uget=id=>db.users.find(u=>u.id===id);
+const users=()=>db.users, SOLO=()=>!!(db.school&&db.school.solo), profs=()=>SOLO()?(me&&me.owner?[me]:db.users.filter(u=>u.role==='sec').slice(0,1)):db.users.filter(u=>u.role==='prof'), uget=id=>db.users.find(u=>u.id===id)||(me&&me.owner&&me.id===id?me:undefined);
 const aget=id=>db.alunos.find(a=>a.id===id), gget=id=>db.grupos.find(g=>g.id===id), lget=id=>db.aulas.find(a=>a.id===id);
 function titleOf(l){if(l.kind==='exp')return'Aula experimental';if(l.kind==='grupo'){const g=gget(l.grupoId);return g?g.nome:'Grupo'}const a=aget(l.alunoId);return a?a.nome:'Aluno'}
 function subOf(l){const end=mint(tmin(l.time)+l.dur);let s=l.time+' – '+end;if(l.kind==='ind'){const a=aget(l.alunoId);if(a)s=a.instr+' · '+s}else if(l.kind==='grupo')s='Aula em grupo · '+s;else s='30 minutos · '+s;return s}
@@ -454,8 +454,8 @@ function render(){
    <aside class="side" aria-label="Menu"><div class="brand">${db.school.logo?`<img src="${db.school.logo}" alt="">`:`<img class="lg-ic" src="${LG_ICON}" alt="">`}<span>${esc(db.school.name||'Compasso')}</span></div>
     ${nl.map(n=>`<button class="nav" data-act="nav" data-v="${n[0]}" ${n[0]===v?'aria-current="page"':''}>${ico(n[2])}<span>${n[1]}</span>${n[0]==='painel'&&pend?`<span class="n">${pend}</span>`:''}${n[0]==='avisos'&&un?`<span class="n">${un}</span>`:''}</button>`).join('')}
     <div class="grow"></div>
-    <div class="who">${avatar(me)}<div><b>${esc(me.name)}</b><small>${me.dono?'Dona':me.role==='sec'?(SOLO()?'Professor independente':'Secretaria'):'Professor'}</small></div></div>
-    ${me.dono?`<button class="nav" data-act="toMaster">${ico('home')}<span>Painel mestre</span></button>`:''}<button class="nav" data-act="logout">${ico('out')}<span>Sair</span></button>
+    <div class="who">${avatar(me)}<div><b>${esc(me.name)}</b><small>${me.dono?'Dona':me.role==='sec'?(SOLO()?(me.owner?'Administrador do estúdio':'Professor independente'):'Secretaria'):'Professor'}</small></div></div>
+    ${CLOUD&&CL.spaces&&CL.spaces.length>1?`<button class="nav" data-act="switchSpace">${ico('users')}<span>Trocar de espaço</span></button>`:''}${me.dono?`<button class="nav" data-act="toMaster">${ico('home')}<span>Painel mestre</span></button>`:''}<button class="nav" data-act="logout">${ico('out')}<span>Sair</span></button>
    </aside><div class="scrim" data-act="drawer"></div>
    <div class="main"><div class="bgl${db.school.logo?' sch':''}" style="background-image:url('${db.school.logo||LG_MARK}')"></div>
     <header class="top"><button class="ib menu-btn" data-act="drawer" aria-label="Abrir menu">${ico('menu')}</button><button class="ib back-btn" data-act="back" aria-label="Voltar">${ico('back')}</button>
@@ -1282,6 +1282,7 @@ async function onAuth(u){
       me={id:u.uid,role:'sec',dono:true,name:d.name||'Dona',email:u.email||d.email||'',palette:d.palette||'compasso',photo:d.photo||''};
       CL.shadow.me=stable(meSnap());startMaster();return}
     if(!d.escolaId||(d.role!=='sec'&&d.role!=='prof')){toast('Seu cadastro está incompleto. Fale com a dona do app.');await FB.M.signOut(FB.auth);return}
+    CL.userDoc=d;CL.spaces=(Array.isArray(d.espacos)&&d.espacos.length)?[{eid:d.escolaId,mode:d.role}].concat(d.espacos.map(e=>({eid:e,mode:'owner'}))):null;
     startSchool(d.escolaId,d.role);
   }catch(e){CL.err='Não consegui carregar. Confira a internet e recarregue a página.';cloudErr(e);render()}
 }
@@ -1298,14 +1299,15 @@ function startMaster(){
   CL.mUnsubs.push(listen(M.collection(fs,'cobrancas'),s=>{CL.cob=Object.fromEntries(s.docs.map(d=>[d.id,d.data()]));if(CL.state==='master')render()}));
   CL.mUnsubs.push(listen(M.query(M.collection(fs,'usuarios'),M.where('role','==','sec')),s=>{CL.secs=s.docs.map(d=>({...d.data(),id:d.id}));if(CL.state==='master')render()}));
 }
-function startSchool(eid,mode){
-  stopSchool();CL.eid=eid;CL.mode=mode;CL.state='load';CL.ready=false;CL.loaded={};CL.err='';db=blankDb();ui.stack=[{v:'home'}];ui.drawer=false;render();
+function startSchool(eid,mode,owner){
+  stopSchool();CL.owner=!!owner;
+  if(owner){const d=CL.userDoc||{};me={id:CL.uid,role:'sec',owner:true,name:d.name||'',email:d.email||'',palette:d.palette||'compasso',photo:d.photo||''};CL.shadow.me=stable(meSnap())}CL.eid=eid;CL.mode=mode;CL.state='load';CL.ready=false;CL.loaded={};CL.err='';db=blankDb();ui.stack=[{v:'home'}];ui.drawer=false;render();
   const{M,fs}=FB,E=(...p)=>M.collection(fs,'escolas',eid,...p),sec=mode==='sec',uidc=CL.uid;
   CL.need=sec?COLS_SEC:COLS_PROF;
   const sub=(name,ref,build)=>CL.unsubs.push(listen(ref,s=>build(s)));
   sub('school',M.doc(fs,'escolas',eid),s=>incoming('school',s.exists()?{name:s.data().name||'',logo:s.data().logo||'',solo:!!s.data().solo,proxVenc:s.data().proxVenc||'',liberadaAte:s.data().liberadaAte||''}:{name:'',logo:'',solo:false,proxVenc:'',liberadaAte:''}));
   if(sec){
-    sub('users',M.query(M.collection(fs,'usuarios'),M.where('escolaId','==',eid)),s=>incoming('users',docs(s)));
+    if(owner)incoming('users',[]);else sub('users',M.query(M.collection(fs,'usuarios'),M.where('escolaId','==',eid)),s=>incoming('users',docs(s)));
     ['alunos','grupos','aulas','datas','extras','vales','despesas','avisos'].forEach(c=>sub(c,E(c),s=>incoming(c,docs(s))));
     sub('alertas',M.query(E('alertas'),M.where('to','==','sec')),s=>incoming('alertas',docs(s)));
     sub('log',M.query(E('log'),M.orderBy('em','desc'),M.limit(300)),s=>incoming('log',docs(s)));
@@ -1345,7 +1347,7 @@ function valMap(){const m={};db.users.forEach(u=>{if(u.role==='prof')m[u.id]={va
 function incoming(col,data){
   const go=()=>{
     if(CL.eid==null&&col!=='x')return;
-    if(col==='school'){db.school=data;CL.shadow.school=stable(data);const bl=!(me&&me.dono)&&cobStatus(data).s==='bloq';if(bl!==!!CL.blockedFlag){const was=CL.blockedFlag;CL.blockedFlag=bl;if(was&&!bl){const e2=CL.eid,m2=CL.mode;setTimeout(()=>startSchool(e2,m2),50)}else render()}}
+    if(col==='school'){db.school=data;CL.shadow.school=stable(data);const bl=!(me&&me.dono)&&cobStatus(data).s==='bloq';if(bl!==!!CL.blockedFlag){const was=CL.blockedFlag;CL.blockedFlag=bl;if(was&&!bl){const e2=CL.eid,m2=CL.mode;setTimeout(()=>startSchool(e2,m2,CL.owner),50)}else render()}}
     else if(col==='log'){db.log=data.sort((a,b)=>(b.em||0)-(a.em||0))}
     else if(col==='valores'){CL.val=data;applyVal();CL.shadow.valores=stable(valMap())}
     else if(col==='alertas'){db.alertas=data.sort(SORT.alertas);const fresh=CL.ready?data.filter(a=>!a.read&&!(CL.seenA||{})[a.id]):[];CL.seenA=Object.fromEntries(data.map(a=>[a.id,1]));fresh.forEach(a=>notify('Compasso',a.text,a.id));CL.shadow.alertas=Object.fromEntries(data.map(a=>[a.id,!!a.read]))}
@@ -1359,7 +1361,7 @@ function incoming(col,data){
     CL.loaded[col]=true;
     if(!CL.ready&&CL.need&&CL.need.every(c=>CL.loaded[c])){
       CL.ready=true;CL.state='school';
-      if(!me||!me.dono){me=uget(CL.uid);if(!me){toast('Seu cadastro não foi encontrado.');FB.M.signOut(FB.auth);return}}
+      if(!me||!(me.dono||me.owner)){me=uget(CL.uid);if(!me){toast('Seu cadastro não foi encontrado.');FB.M.signOut(FB.auth);return}}
       ui.stack=[{v:me.role==='sec'?'painel':'inicio'}];render();return}
     if(CL.ready)softRender()};
   if(CL.dirty&&CL.ready)CL.q.push(go);else go()}
@@ -1373,7 +1375,7 @@ async function syncNow(){
   if(CL.run)return false;CL.run=true;CL.t=null;let ok=true;
   try{
     const{M,fs}=FB;const ops=[];
-    if(me&&me.dono){const s=stable(meSnap());if(s!==CL.shadow.me){ops.push({set:[M.doc(fs,'usuarios',me.id),meSnap(),{merge:true}],after:()=>{CL.shadow.me=s}})}}
+    if(me&&(me.dono||me.owner)){const s=stable(meSnap());if(s!==CL.shadow.me){ops.push({set:[M.doc(fs,'usuarios',me.id),meSnap(),{merge:true}],after:()=>{CL.shadow.me=s}})}}
     if(CL.ready&&CL.eid){
       const sec=CL.mode==='sec',eid=CL.eid;
       for(const col of(sec?DIFF_SEC:DIFF_PROF)){
@@ -1518,13 +1520,22 @@ function masterHtml(){
    <div class="main"><div class="bgl" style="background-image:url('${LG_MARK}')"></div><header class="top"><button class="ib menu-btn" data-act="drawer" aria-label="Abrir menu">${ico('menu')}</button><h1>${T[v]}</h1><span class="dt">${fmtDL(today())}</span><img class="top-logo" src="${LG_ICON}" alt="Compasso"></header>
    <main class="view" id="view">${body}</main></div></div>`}
 
-function newSchoolForm(){openModal('Nova escola',`<div class="form">${selF('Tipo de conta','nsTipo',[{v:'escola',t:'Escola (professores e secretaria)'},{v:'solo',t:'Professor independente'}],'escola')}${fld('Nome da escola ou do estúdio','nsEsc','')}${fld('Nome da secretária ou secretário','nsNome','')}${fld('E-mail dela(e)','nsEmail','','email','inputmode="email"')}</div><small>A secretaria recebe um e-mail com o link para criar a senha.</small>`,'<button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn" data-act="saveSchoolNew">Criar escola</button>')}
+function newSchoolForm(){openModal('Nova escola',`<div class="form">${selF('Tipo de conta','nsTipo',[{v:'escola',t:'Escola (professores e secretaria)'},{v:'solo',t:'Professor independente'}],'escola')}${fld('Nome da escola ou do estúdio','nsEsc','')}${fld('Nome da secretária ou secretário','nsNome','')}${fld('E-mail dela(e)','nsEmail','','email','inputmode="email"')}</div><small>A secretaria recebe um e-mail com o link para criar a senha. Para professor independente: se o e-mail já for de um professor de escola, o estúdio é ligado ao mesmo login.</small>`,'<button class="btn ghost" data-act="closeModal">Cancelar</button><button class="btn" data-act="saveSchoolNew">Criar escola</button>')}
 async function saveSchoolNew(){
   const esc0=val('nsEsc').trim(),nome=val('nsNome').trim(),email=val('nsEmail').trim();
   if(!esc0||!nome||!email){toast('Preencha os três campos.');return}
   toast('Criando a escola…');const{M,fs}=FB;
   try{
-    const sid=await createAuthUser(email);const eid='e'+Math.random().toString(36).slice(2,10);
+    const eid0='e'+Math.random().toString(36).slice(2,10);
+    if(val('nsTipo')==='solo'){
+      const q=await M.getDocs(M.query(M.collection(fs,'usuarios'),M.where('email','==',email)));
+      if(q.docs&&q.docs.length){const ex=q.docs[0],u=ex.data();
+        if(u.role==='dono'){toast('Esse e-mail é o da dona do app.');return}
+        const b0=M.writeBatch(fs);
+        b0.set(M.doc(fs,'escolas',eid0),{name:esc0,logo:'',criadaEm:Date.now(),solo:true});
+        b0.set(M.doc(fs,'usuarios',ex.id),{espacos:[...(Array.isArray(u.espacos)?u.espacos:[]),eid0]},{merge:true});
+        await b0.commit();closeModal();toast('Estúdio criado e ligado ao login de '+(u.name||email)+'. No app dele aparece "Trocar de espaço".');return}}
+    const sid=await createAuthUser(email);const eid=eid0;
     const b=M.writeBatch(fs);
     b.set(M.doc(fs,'escolas',eid),{name:esc0,logo:'',criadaEm:Date.now(),...(val('nsTipo')==='solo'?{solo:true}:{})});
     b.set(M.doc(fs,'usuarios',sid),{role:'sec',name:nome,email,escolaId:eid,palette:'compasso',photo:''});
@@ -1532,10 +1543,18 @@ async function saveSchoolNew(){
     await M.sendPasswordResetEmail(FB.auth,email);
     closeModal();toast('Escola criada. '+nome+' recebeu um e-mail para criar a senha.'+(DEMO?' Na simulação, a senha é 123456.':''));
   }catch(e){toast(authErr(e))}}
+async function openSpaces(){
+  const{M,fs}=FB;const items=[];
+  for(const sp of(CL.spaces||[])){let n='';try{const sn=await M.getDoc(M.doc(fs,'escolas',sp.eid));n=sn.exists()?(sn.data().name||''):''}catch(e){}
+    items.push({...sp,n:n||'Sem nome',lab:sp.mode==='owner'?'Administrador do meu estúdio':sp.mode==='prof'?'Professor(a)':'Secretaria'})}
+  const atual=CL.eid,aOwn=!!CL.owner;
+  openModal('Trocar de espaço',`<div class="list">${items.map(x=>`<div class="item"><div class="g"><b>${esc(x.n)}</b><small>${x.lab}</small></div>${(x.eid===atual&&(x.mode==='owner')===aOwn)?'<span class="chip ok">Você está aqui</span>':`<button class="btn sm" data-act="goSpace" data-eid="${x.eid}" data-mode="${x.mode}">Entrar</button>`}</div>`).join('')}</div>`,'<button class="btn" data-act="closeModal">Fechar</button>')}
 function cloudAct(a,t,id,ev){
   switch(a){
   case'newSchool':newSchoolForm();return true;
   case'saveSchoolNew':saveSchoolNew();return true;
+  case'switchSpace':openSpaces();return true;
+  case'goSpace':{const eid=t.dataset.eid,md=t.dataset.mode;closeModal();flush().then(()=>{stopSchool();me=null;startSchool(eid,md==='owner'?'sec':md,md==='owner')});return true}
   case'openSchool':flush().then(()=>startSchool(id,'sec'));return true;
   case'toMaster':flush().then(()=>{stopSchool();startMaster()});return true;
   case'sendResetFor':sendResetFor(id);return true;
