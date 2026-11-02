@@ -35,6 +35,11 @@ h1{margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-si
 .list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:.8vh}
 .p{display:flex;justify-content:space-between;gap:1vw;border:1px solid #D3DEE6;border-radius:1.4vh;padding:1vh 1vw;font-size:min(2.3vh,1.2vw)}.p b{overflow-wrap:anywhere}.p small{color:#566879;white-space:nowrap}
 .ok{color:#1D7A57;font-weight:700}
+.dest{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:.9vw}
+.dest div{background:#13293D;color:#fff;border-radius:1.6vh;padding:1.2vh .9vw;font-size:min(1.9vh,1vw);line-height:1.25}
+.dest small{display:block;color:#F5B700;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:min(1.6vh,.85vw)}
+.dest b{display:block;font-size:min(2.6vh,1.4vw);overflow-wrap:anywhere}
+.nt{font-size:min(1.8vh,.95vw);color:#566879;flex:none}
 .hh{display:flex;justify-content:space-between;align-items:center;gap:1vw}.hh button{padding:1vh 1.2vw;font-size:min(2vh,1.05vw)}
 .p .x{background:#FBE9E6;color:#B2392B;padding:.6vh .9vw;font-size:min(1.9vh,1vw);border-radius:1vh;flex:none}
 .p .r2{display:flex;gap:.8vw;align-items:center}
@@ -56,7 +61,7 @@ h1{margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-si
  <div class="card"><h2>Resultados do desafio</h2>
   <div class="kp"><div><b id="rt">0</b>participantes</div><div><b id="rd">0</b>concluíram</div><div><b id="re">0</b>erros no total</div></div>
   <div class="hero" id="hero"></div><div id="rank"></div></div>
- <div class="card"><div class="hh"><h2>Participantes</h2><button id="bAllR" class="r" type="button">Apagar todos</button></div><div class="list" id="lista"></div></div>
+ <div class="card"><div class="hh"><h2>Participantes</h2><button id="bAllR" class="r" type="button">Apagar todos</button></div><div class="dest" id="dest"></div><div class="nt" id="nt"></div><div class="list" id="lista"></div></div>
 </div>
 </div>
 <script>
@@ -65,6 +70,9 @@ var TIT=["Demanda administrativa pendente","Falha no monitoramento","Achado de m
 var DATA=[], ENC=false;
 function un(v){if(v.stringValue!==undefined)return v.stringValue;if(v.integerValue!==undefined)return Number(v.integerValue);if(v.booleanValue!==undefined)return v.booleanValue;if(v.mapValue){var o={},f=v.mapValue.fields||{};for(var k in f)o[k]=un(f[k]);return o;}return null;}
 function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e;}
+function dur(ms){var t=Math.round(ms/1000),m=Math.floor(t/60),s=t%60;return m+":"+(s<10?"0":"")+s;}
+function tempo(x){return (x.fim&&x.inicio)?x.fim-x.inicio:null;}
+function acertos(x){var o=x.porSituacao||{},n=0;for(var i=1;i<=5;i++){if(!(o["s"+i]>0))n++;}return n;}
 function hora(t){return t?new Date(t).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"";}
 function load(){
   fetch("https://firestore.googleapis.com/v1/projects/"+PROJECT_ID+"/databases/(default)/documents/participantes?pageSize=300").then(function(r){return r.json();}).then(function(d){
@@ -85,8 +93,19 @@ function draw(){
   ord.forEach(function(i,pos){var r=el("div","row"+(pos===0&&mx>0?" f":"")),t=el("div","t"),b=el("div","bar2"),f=el("i");
     t.appendChild(el("span","",(i+1)+". "+TIT[i]));t.appendChild(el("span","",tot[i]+" erro"+(tot[i]===1?"":"s")+" · "+pes[i]+" pessoa"+(pes[i]===1?"":"s")));
     f.style.width=(mx?tot[i]/mx*100:0)+"%";b.appendChild(f);r.appendChild(t);r.appendChild(b);rk.appendChild(r);});
+  var fin=DATA.filter(function(x){return x.concluiu&&tempo(x)!==null;});
+  fin.sort(function(a,b){return (a.erros||0)-(b.erros||0)||tempo(a)-tempo(b);});
+  var D=document.getElementById("dest");D.textContent="";
+  if(fin.length){
+    var rap=fin.slice().sort(function(a,b){return tempo(a)-tempo(b);})[0];
+    var ace=fin.slice().sort(function(a,b){return acertos(b)-acertos(a)||tempo(a)-tempo(b);})[0];
+    [["Melhor geral",fin[0],(fin[0].erros||0)+" erro(s) · "+dur(tempo(fin[0]))],["Mais rápido",rap,dur(tempo(rap))+" · "+(rap.erros||0)+" erro(s)"],["Mais acertos de primeira",ace,acertos(ace)+" de 5 · "+dur(tempo(ace))]].forEach(function(d){
+      var c=el("div"),s1=el("small","",d[0]),s2=el("b","",d[1].nome),s3=el("span","",d[2]);c.appendChild(s1);c.appendChild(s2);c.appendChild(s3);D.appendChild(c);});
+  }
+  var rest=DATA.filter(function(x){return fin.indexOf(x)<0;});
   var L=document.getElementById("lista");L.textContent="";
-  DATA.forEach(function(x){var p=el("div","p"),n=el("b","",x.nome),s=el("small","",x.concluiu?(x.erros||0)+" erro(s) · concluiu":"em andamento"),r2=el("div","r2"),bx=el("button","x","Apagar");if(x.concluiu)s.className="ok";bx.type="button";bx.onclick=function(){confirma(bx,"Confirmar?",function(){apagar([x.id]);});};r2.appendChild(s);r2.appendChild(bx);p.appendChild(n);p.appendChild(r2);L.appendChild(p);});
+  fin.concat(rest).forEach(function(x,idx){var p=el("div","p"),isF=fin.indexOf(x)>=0,n=el("b","",(isF?(idx+1)+"º  ":"")+x.nome),s=el("small","",isF?(x.erros||0)+" erro(s) · "+acertos(x)+"/5 de 1ª · "+dur(tempo(x)):(x.concluiu?(x.erros||0)+" erro(s) · concluiu":"em andamento")),r2=el("div","r2"),bx=el("button","x","Apagar");if(x.concluiu)s.className="ok";bx.type="button";bx.onclick=function(){confirma(bx,"Confirmar?",function(){apagar([x.id]);});};r2.appendChild(s);r2.appendChild(bx);p.appendChild(n);p.appendChild(r2);L.appendChild(p);});
+  var N=document.getElementById("nt");if(N)N.textContent="Ranking: menos erros; em empate, menor tempo. O tempo vai da entrada do nome até o fim do desafio.";
 }
 function show(res){ENC=res;document.getElementById("ent").classList.toggle("on",!res);document.getElementById("res").classList.toggle("on",res);
   document.getElementById("bRes").hidden=res;document.getElementById("bVolta").hidden=!res;draw();}
