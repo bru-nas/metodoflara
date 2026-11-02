@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Participantes do desafio</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E7EEF3;--card:#fff;--ink:#13293D;--muted:#566879;--line:#D3DEE6;--accent:#1B6CA8;--good:#1D7A57;--good-bg:#E3F3EC;--chip:#EAF2F8}
+@media (prefers-color-scheme:dark){:root{--bg:#0C1823;--card:#152736;--ink:#E8F0F6;--muted:#9DB1C1;--line:#27404F;--accent:#6CB4EE;--good:#58C79A;--good-bg:#12372B;--chip:#1E3546;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;font-size:16px;line-height:1.4}
+main{max-width:520px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:14px}
+.eyebrow{margin:0;font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+h1{margin:0;font-family:"Bricolage Grotesque","Trebuchet MS",sans-serif;font-size:26px;line-height:1.15}
+.cap{color:var(--muted);margin:0}
+.count{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.count b{font-family:"Bricolage Grotesque",sans-serif;font-size:34px;line-height:1;color:var(--accent)}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+li{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 13px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.n{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.m{font-size:13.5px;color:var(--muted)}
+.tag{flex:none;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--chip);color:var(--accent)}
+.tag.ok{background:var(--good-bg);color:var(--good)}
+.st{font-size:14px;color:var(--muted)}
+.top{background:var(--card);border:2px solid var(--accent);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.top h2{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-size:18px}
+.hero{font-weight:700;font-size:17px}
+.row{display:flex;flex-direction:column;gap:3px;font-size:14.5px}
+.row .l{display:flex;justify-content:space-between;gap:8px}
+.bar{height:8px;border-radius:4px;background:var(--chip);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.row.first .bar i{background:#B2392B}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Painel da palestrante</p>
+  <h1>Roberta Priscilla Honorato Ferreira</h1>
+  <p class="cap">Os nomes aparecem aqui assim que cada pessoa digita no desafio. A lista atualiza sozinha.</p>
+  <div class="count"><span>Participantes</span><b id="tot">0</b></div>
+  <div class="count"><span>Concluíram o desafio</span><b id="done">0</b></div>
+  <div class="top" id="top" hidden><h2>Situações mais erradas</h2><div class="hero" id="hero"></div><div id="rank"></div></div>
+  <p class="st" id="st" role="status">Carregando…</p>
+  <ul id="lista"></ul>
+</main>
+<script>
+/* Mesmo ID do projeto Firebase usado no index.html */
+var PROJECT_ID = "ppgo-a54c7";
+function un(v){ if(v.stringValue!==undefined)return v.stringValue; if(v.integerValue!==undefined)return Number(v.integerValue); if(v.booleanValue!==undefined)return v.booleanValue; if(v.mapValue){var o={},f=v.mapValue.fields||{};for(var k in f)o[k]=un(f[k]);return o;} return null; }
+var TIT = ["Demanda administrativa pendente","Falha no monitoramento","Achado de material ilícito","Rendição de posto","Registro de ocorrência"];
+function hora(t){ if(!t) return ""; var d=new Date(t); return d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
+function load(){
+  var st=document.getElementById("st");
+  if(!PROJECT_ID){ st.textContent="Falta configurar o endereço do banco de dados."; return; }
+  fetch("https://firestore.googleapis.com/v1/projects/"+PROJECT_ID+"/databases/(default)/documents/participantes?pageSize=300").then(function(r){return r.json();}).then(function(d){
+    if(d.error) throw new Error(d.error.message);
+    var arr=[]; (d.documents||[]).forEach(function(doc){ var o={},f=doc.fields||{}; for(var k in f)o[k]=un(f[k]); if(o.nome) arr.push(o); });
+    arr.sort(function(a,b){return (b.inicio||0)-(a.inicio||0);});
+    document.getElementById("tot").textContent=arr.length;
+    document.getElementById("done").textContent=arr.filter(function(x){return x.concluiu;}).length;
+    var tot=[0,0,0,0,0], pes=[0,0,0,0,0];
+    arr.forEach(function(x){ var o=x.porSituacao||{}; for(var i=0;i<5;i++){ var v=o["s"+(i+1)]||0; tot[i]+=v; if(v>0) pes[i]++; } });
+    var soma=tot.reduce(function(a,b){return a+b;},0), top=document.getElementById("top");
+    if(soma>0){
+      top.hidden=false;
+      var ord=[0,1,2,3,4].sort(function(a,b){return tot[b]-tot[a];}), mx=tot[ord[0]];
+      document.getElementById("hero").textContent="Mais errada: Situação "+(ord[0]+1)+" — "+TIT[ord[0]]+" ("+tot[ord[0]]+" erro"+(tot[ord[0]]===1?"":"s")+")";
+      var rk=document.getElementById("rank"); rk.textContent="";
+      ord.forEach(function(i,pos){
+        var r=document.createElement("div"), l=document.createElement("div"), a=document.createElement("span"), b=document.createElement("span"), bar=document.createElement("div"), f=document.createElement("i");
+        r.className="row"+(pos===0?" first":""); l.className="l"; a.textContent=(i+1)+". "+TIT[i]; b.textContent=tot[i]+" erro"+(tot[i]===1?"":"s")+" · "+pes[i]+" pessoa"+(pes[i]===1?"":"s");
+        bar.className="bar"; f.style.width=(mx?tot[i]/mx*100:0)+"%"; bar.appendChild(f); l.appendChild(a); l.appendChild(b); r.appendChild(l); r.appendChild(bar); rk.appendChild(r);
+      });
+    } else top.hidden=true;
+    var ul=document.getElementById("lista"); ul.textContent="";
+    arr.forEach(function(x){
+      var li=document.createElement("li"), l=document.createElement("div"), n=document.createElement("div"), m=document.createElement("div"), t=document.createElement("span");
+      n.className="n"; n.textContent=x.nome; m.className="m"; m.textContent="Entrou às "+hora(x.inicio)+(x.concluiu?" · "+(x.erros||0)+" erro(s)":"");
+      l.appendChild(n); l.appendChild(m);
+      t.className="tag"+(x.concluiu?" ok":""); t.textContent=x.concluiu?"Concluiu":"Em andamento";
+      li.appendChild(l); li.appendChild(t); ul.appendChild(li);
+    });
+    st.textContent=arr.length?"Atualizado às "+hora(Date.now()):"Ninguém entrou ainda.";
+  }).catch(function(){ st.textContent="Não consegui carregar. Verifique a internet."; });
+}
+load(); setInterval(load,4000);
+</script>
+</body>
+</html>
