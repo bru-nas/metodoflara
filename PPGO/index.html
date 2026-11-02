@@ -155,7 +155,7 @@ function dbSend(method, path, body, cb){
 function errosTotal(){var t=0;for(var k in state.tries)t+=state.tries[k]||0;return t;}
 var state = { i:-1, view:"cover", order:{}, tries:{}, last:null, name:"", key:null };
 function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-function teamHtml(){return '<p class="team"><b>Palestrante:</b> '+PALESTRANTE+"</p>";}
+function teamHtml(){return '<p class="team"><b>'+PALESTRANTE+"</b></p>";}
 var app = document.getElementById("app");
 
 function revisar(){var r=[];SCENES.forEach(function(x,n){if((state.tries[n]||0)>=2)r.push(n);});return r;}
